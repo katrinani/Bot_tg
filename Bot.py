@@ -40,8 +40,8 @@ async def map_csu(message: types.Message):
 @dp.callback_query(F.data == '0fl' or F.data == '1fl' or F.data == '2fl' or F.data == '3fl' or F.data == '4fl')
 async def callback_message(callback: types.CallbackQuery):
     first_char = str(callback.data)[0]  # 1 число поступающего колбэка
-    file = FSInputFile(f'./Этаж {first_char}.png')  # 'rb' можно добавить, не совсем понятно
-    await callback.message.answer(chat_id, text=f'{first_char} этаж')  # или использовать callback.message.answer
+    file = FSInputFile(f'./Этаж {first_char}.png') 
+    await callback.message.answer(chat_id, text=f'{first_char} этаж')
     await callback.message.answer_photo(file)
 
 
