@@ -16,7 +16,11 @@ async def main(chat_id: int):
     <em>/links_csu</em> - выведу ссылки, связанные с ЧелГУ и деятелностью его студентов
     <em>/links_it</em> - выведу полезные ссылки, помогающие в освоении it профессии
     <em>/help</em> - расскажу ещё раз про свои функции"""
-    await bot.send_message(chat_id, text=mess, parse_mode='HTML')
+    await bot.send_message(
+        chat_id,
+        text=mess,
+        parse_mode='HTML'
+        )
 
 
 @dp.message(commands=['map'])
@@ -27,21 +31,26 @@ async def map_csu(message: types.Message):
     btn3 = types.InlineKeyboardButton(text='2 этаж', callback_data='2fl')
     btn4 = types.InlineKeyboardButton(text='3 этаж', callback_data='3fl')
     btn5 = types.InlineKeyboardButton(text='4 этаж', callback_data='4fl')
-    url_per = 'https://maps.google.com/maps?q=55.180035,61.335219&ll=55.180035,61.335219&z=16'
-    btn6 = types.InlineKeyboardButton(text='Расположение 4 корпуса', url=url_per)
+    btn6 = types.InlineKeyboardButton(
+        text='Расположение 4 корпуса',
+        url='https://maps.google.com/maps?q=55.180035,61.335219&ll=55.180035,61.335219&z=16'
+        )
     markup.row(btn1)
     markup.row(btn2, btn3)
     markup.row(btn4, btn5)
     markup.row(btn6)
-    mes = 'Какой <em>этаж/корпус</em> Вас интересует?'
-    await message.answer(text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
+    await message.answer(
+        text='Какой <em>этаж/корпус</em> Вас интересует?',
+        reply_markup=markup.as_markup(),
+        parse_mode='HTML'
+    )
 
 
 @dp.callback_query(F.data == '0fl' or F.data == '1fl' or F.data == '2fl' or F.data == '3fl' or F.data == '4fl')
 async def callback_message(callback: types.CallbackQuery):
     first_char = str(callback.data)[0]  # 1 число поступающего колбэка
-    file = FSInputFile(f'./Этаж {first_char}.png') 
-    await callback.message.answer(chat_id, text=f'{first_char} этаж')
+    file = FSInputFile(f'./Этаж {first_char}.png')
+    await callback.message.answer(chat_id, text=f'{first_char} этаж')  # вызов 90 этажа пока не возможен, jpg формат
     await callback.message.answer_photo(file)
 
 
@@ -52,7 +61,11 @@ async def timetable(message: types.Message):
     btn2 = types.InlineKeyboardButton(text='Четная неделя (2)', callback_data='n2')
     markup.row(btn1)
     markup.row(btn2)
-    await message.answer(text='Выберите <em> неделю </em>', reply_markup=markup.as_markup(), parse_mode='HTML')
+    await message.answer(
+        text='Выберите <em> неделю </em>',
+        reply_markup=markup.as_markup(),
+        parse_mode='HTML'
+    )
 
 
 @dp.callback_query(F.data == 'n1' or F.data == 'n2')
@@ -68,7 +81,11 @@ async def one_step(callback: types.CallbackQuery):
         markup2.row(btn1, btn2)
         markup2.row(btn3, btn4)
         markup2.row(btn5, btn6)
-        await callback.message.answer(text='Выберите <em>день недели</em>', reply_markup=markup2.as_markup(), parse_mode='HTML')
+        await callback.message.answer(
+            text='Выберите <em>день недели</em>',
+            reply_markup=markup2.as_markup(),
+            parse_mode='HTML'
+        )
     elif callback.data == 'n2':
         markup3 = types.InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(text='Понедельник', callback_data='2_1d')
@@ -80,7 +97,11 @@ async def one_step(callback: types.CallbackQuery):
         markup3.row(btn1, btn2)
         markup3.row(btn3, btn4)
         markup3.row(btn5, btn6)
-        await callback.message.answer(text='Выберите <em>день недели</em>', reply_markup=markup3.as_markup(), parse_mode='HTML')
+        await callback.message.answer(
+            text='Выберите <em>день недели</em>',
+            reply_markup=markup3.as_markup(),
+            parse_mode='HTML'
+        )
 
 
 @dp.callback_query(str(F.data) in '1_1d1_2d1_3d1_4d1_5d1_6d2_1d2_2d2_3d2_4d2_5d2_6d')
@@ -88,7 +109,6 @@ async def step(callback: types.CallbackQuery):
     first_char = str(callback.data)[0:3]
     file = FSInputFile(f'./day{first_char}.jpg')
     await callback.message.answer_photo(file)
-    # await bot.answer_callback_query(callback.id)
 
 
 @dp.message(commands=['info'])
@@ -98,33 +118,53 @@ async def info(message: types.Message):
     btn2 = types.InlineKeyboardButton(text='Ресурсы для программистов', callback_data='it')
     markup.row(btn1)
     markup.row(btn2)
-    mes = 'Какая <em>информация</em> Вас интересует?'
-    await message.answer(text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
+    await message.answer(
+        text='Какая <em>информация</em> Вас интересует?',
+        reply_markup=markup.as_markup(),
+        parse_mode='HTML'
+    )
 
 
 @dp.callback_query(F.data == 'csu' or F.data == 'it')
 async def callback_mes(callback: types.CallbackQuery):
     if callback.data == 'csu':
-        await callback.message.answer(text="""<b><em>Сайты, связанные с ЧелГУ</em></b>:
-        <u>Мудл ЧелГУ</u>- супер сайт с курсами
-        <u>Мудл ИИТ</u>-мега сайт с курсами всеми
-        <u>Сайт ЧелГУ</u>
-        <u>Научная Библиотека ЧелГУ</u>-мега библиотека
-        <u>ЦТС(ЦентрТворчестваСтудентов)</u>
-        <u>Профсоюзный Комитет(вк)</u>-не лезь,сожрет
+        await callback.message.answer(
+            text="""<b><em>Сайты, связанные с ЧелГУ</em></b>:
+            <u>Мудл ЧелГУ</u> - система управления электронными образовательными курсами (здесь ты можешь \
+            найти курсы от преподавателей с различных факультетов)
+            <u>Мудл ИИТ</u> - здесь ты можешь найти курсы от преподавателей из ИИТ
+            <u>Сайт ЧелГУ</u> - новостной сайт, где ты можешь найти информацию о ЧелГУ в целом\
+             (структура, расписание и многое другое)
+            <u>Научная Библиотека ЧелГУ</u> - огромный каталог электронных книг и прочих информационных ресурсов
+            <u>ЦТС(ЦентрТворчестваСтудентов)</u> - здесь можно узнать о творческой внеучебной жизни вуза \
+            (информация по мероприятиям, ссылки на кружки по пению, танцам и т.д.)
+            <u>Профсоюзный Комитет(вк)</u> - информация для участников профсоюза (о мероприятиях, \
+            льготах, как вступить и т.п.)
         
-        <em>Хочешь ссылки? Жми /links_csu</em>""", parse_mode='HTML')
+            <em>Хочешь ссылки? Жми /links_csu</em>""",
+            parse_mode='HTML'
+        )
     elif callback.data == 'it':
-        await callback.message.answer(text="""<b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
-        <u>Habr</u> - сайт, созданный для публикации новостей, аналитических статей, мыслей, связанных с информационными технологиями и интернетом.
-        <u>GitHub</u> - крупнейший веб-сервис для хостинга IT-проектов и их совместной разработки. На сайте представлен свободный исходный код, с которым вы можете ознакомиться.
-        <u>Metanit</u> - сайт посвящен различным языкам и технологиям программирования, компьютерам, мобильным платформам и ИТ-технологиям c различные руководства и учебные материалы, статьи и примеры
-        <u>Открытый лекторий Летних школ от Яндекса</u> - более 150 лекций в онлайн-формате, общение с топовыми экспертами из Яндекса, прокачка знаний по востребованным IT‑специальностям и решение сложных бизнес‑кейсов
-        <u>Киберфорум</u> - форум программистов и системных администраторов, помощь в решении задач по программированию, математике, физике и другим наукам, решение проблем с компьютером, операционными системами
-        <u>Библиотека программиста</u> - материалы, которые научат и помогут программировать. Книги и лекции, видеоуроки и советы, тесты знаний и обсуждение горячих тем
-        <u>Roadmap</u> - собрание дорожных карт, руководств и другого образовательного контента, которое поможет разработчикам выбрать правильный путь и направлять их обучение.
+        await callback.message.answer(
+            text="""<b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
+            <u>Habr</u> - сайт, созданный для публикации новостей, аналитических статей, мыслей, \
+            связанных с информационными технологиями и интернетом.
+            <u>GitHub</u> - крупнейший веб-сервис для хостинга IT-проектов и их совместной разработки. \
+            На сайте представлен свободный исходный код, с которым вы можете ознакомиться.
+            <u>Metanit</u> - сайт посвящен различным языкам и технологиям программирования, компьютерам,\
+             мобильным платформам и ИТ-технологиям c различные руководства и учебные материалы, статьи и примеры
+            <u>Открытый лекторий Летних школ от Яндекса</u> - более 150 лекций в онлайн-формате, общение с топовыми\
+             экспертами из Яндекса, прокачка знаний по востребованным IT‑специальностям и решение сложных бизнес‑кейсов
+            <u>Киберфорум</u> - форум программистов и системных администраторов, помощь в решении задач по \
+            программированию, математике, физике и другим наукам, решение проблем с компьютером, операционными системами
+            <u>Библиотека программиста</u> - материалы, которые научат и помогут программировать. Книги и лекции,\
+             видеоуроки и советы, тесты знаний и обсуждение горячих тем
+            <u>Roadmap</u> - собрание дорожных карт, руководств и другого образовательного контента, которое\
+             поможет разработчикам выбрать правильный путь и направлять их обучение.
         
-        <em>Заинтересовало? Жми /links_it для получения ссылок</em>""", parse_mode='HTML')
+        <em>Заинтересовало? Жми /links_it для получения ссылок</em>""",
+            parse_mode='HTML'
+        )
 
 
 @dp.message(commands=['links_csu'])
@@ -140,8 +180,11 @@ async def csu(message: types.Message):
     markup.row(btn4)
     markup.row(btn5)
     markup.row(btn6)
-    mes = 'Выберите <em>рессурс</em>, на который хотите перейти'
-    await message.answer(text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
+    await message.answer(
+        text='Выберите <em>рессурс</em>, на который хотите перейти',
+        reply_markup=markup.as_markup(),
+        parse_mode='HTML'
+    )
 
 
 @dp.message(commands=['links_it'])
@@ -150,7 +193,8 @@ async def it(message: types.Message):
     btn1 = types.InlineKeyboardButton(text='Habr', url='https://habr.com/ru/')
     btn2 = types.InlineKeyboardButton(text='GitHub', url='https://github.com/')
     btn3 = types.InlineKeyboardButton(text='Metanit', url='https://metanit.com/')
-    btn4 = types.InlineKeyboardButton(text='Открытый лекторий Летних школ от Яндекса', url='https://yandex.ru/yaintern/schools/open-lectures')
+    btn4 = types.InlineKeyboardButton(text='Открытый лекторий Летних школ от Яндекса',
+                                      url='https://yandex.ru/yaintern/schools/open-lectures')
     btn5 = types.InlineKeyboardButton(text='Киберфорум', url='https://www.cyberforum.ru/')
     btn6 = types.InlineKeyboardButton(text='Библиотека программиста', url='https://proglib.io/')
     btn7 = types.InlineKeyboardButton(text='Roadmap', url='https://roadmap.sh/')
@@ -158,8 +202,11 @@ async def it(message: types.Message):
     markup.row(btn4)
     markup.row(btn5, btn7)
     markup.row(btn6)
-    mes = 'Выберите <em>рессурс</em>, на который хотите перейти'
-    await message.answer(text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
+    await message.answer(
+        text='Выберите <em>рессурс</em>, на который хотите перейти',
+        reply_markup=markup.as_markup(),
+        parse_mode='HTML'
+    )
 
 
 if __name__ == '__main__':
