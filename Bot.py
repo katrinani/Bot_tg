@@ -1,12 +1,10 @@
 import aiogram
 from aiogram.types import FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram import Bot, Dispatcher, types, executor
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
 dp = Dispatcher()
-
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
 
 
 @dp.message_handler(commands=['start', 'help'])
@@ -42,27 +40,25 @@ async def map_csu(message: types.Message):
 @dp.callback_query(F.data == '0fl' or F.data == '1fl' or F.data == '2fl' or F.data == '3fl' or F.data == '4fl')
 async def callback_message(callback: types.CallbackQuery):
     first_char = str(callback.data)[0]  # 1 число поступающего колбэка
-    # file = open(f'./Этаж {first_char}.png', 'rb')
-    file = FSInputFile(f'./Этаж {first_char}.png')
-    await bot.send_message(chat_id, text=f'{first_char} этаж')
-    await bot.send_photo(chat_id, file)
-    # await bot.answer_callback_query(callback.id)
+    file = FSInputFile(f'./Этаж {first_char}.png')  # 'rb' можно добавить, не совсем понятно
+    await callback.message.answer(chat_id, text=f'{first_char} этаж')  # или использовать callback.message.answer
+    await callback.message.answer_photo(file)
 
 
-@dp.message_handler(commands=['timetable'])
-async def timetable(chat_id: int):
-    markup = types.InlineKeyboardMarkup()
+@dp.message(commands=['timetable'])
+async def timetable(message: types.Message):
+    markup = types.InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Нечетная неделя (1)', callback_data='n1')
     btn2 = types.InlineKeyboardButton(text='Четная неделя (2)', callback_data='n2')
     markup.row(btn1)
     markup.row(btn2)
-    await bot.send_message(chat_id, text='Выберите <em> неделю </em>', reply_markup=markup, parse_mode='HTML')
+    await message.answer(text='Выберите <em> неделю </em>', reply_markup=markup.as_markup(), parse_mode='HTML')
 
 
-@dp.callback_query_handler(func=lambda callback: callback.data == 'n1' or callback.data == 'n2')
-async def one_step(chat_id: int):
+@dp.callback_query(F.data == 'n1' or F.data == 'n2')
+async def one_step(callback: types.CallbackQuery):
     if callback.data == 'n1':
-        markup2 = types.InlineKeyboardMarkup()
+        markup2 = types.InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(text='Понедельник', callback_data='1_1d')
         btn2 = types.InlineKeyboardButton(text='Вторник', callback_data='1_2d')
         btn3 = types.InlineKeyboardButton(text='Среда', callback_data='1_3d')
@@ -72,9 +68,9 @@ async def one_step(chat_id: int):
         markup2.row(btn1, btn2)
         markup2.row(btn3, btn4)
         markup2.row(btn5, btn6)
-        await bot.send_message(chat_id, text='Выберите <em>день недели</em>', reply_markup=markup2, parse_mode='HTML')
+        await callback.message.answer(text='Выберите <em>день недели</em>', reply_markup=markup2.as_markup(), parse_mode='HTML')
     elif callback.data == 'n2':
-        markup3 = types.InlineKeyboardMarkup()
+        markup3 = types.InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(text='Понедельник', callback_data='2_1d')
         btn2 = types.InlineKeyboardButton(text='Вторник', callback_data='2_2d')
         btn3 = types.InlineKeyboardButton(text='Среда', callback_data='2_3d')
@@ -84,32 +80,32 @@ async def one_step(chat_id: int):
         markup3.row(btn1, btn2)
         markup3.row(btn3, btn4)
         markup3.row(btn5, btn6)
-        await bot.send_message(chat_id, text='Выберите <em>день недели</em>', reply_markup=markup3, parse_mode='HTML')
+        await callback.message.answer(text='Выберите <em>день недели</em>', reply_markup=markup3.as_markup(), parse_mode='HTML')
 
 
-@dp.callback_query_handler(func=lambda callback: str(callback.data) in '1_1d1_2d1_3d1_4d1_5d1_6d2_1d2_2d2_3d2_4d2_5d2_6d')
-async def step(chat_id: int):
+@dp.callback_query(str(F.data) in '1_1d1_2d1_3d1_4d1_5d1_6d2_1d2_2d2_3d2_4d2_5d2_6d')
+async def step(callback: types.CallbackQuery):
     first_char = str(callback.data)[0:3]
     file = FSInputFile(f'./day{first_char}.jpg')
-    await bot.send_photo(chat_id, file)
-    await bot.answer_callback_query(callback.id)
+    await callback.message.answer_photo(file)
+    # await bot.answer_callback_query(callback.id)
 
 
-@dp.message_handler(commands=['info'])
-async def info(chat_id: int):
-    markup = types.InlineKeyboardMarkup()
+@dp.message(commands=['info'])
+async def info(message: types.Message):
+    markup = types.InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Информация о интернет-ресурсах ЧелГУ', callback_data='csu')
     btn2 = types.InlineKeyboardButton(text='Ресурсы для программистов', callback_data='it')
     markup.row(btn1)
     markup.row(btn2)
     mes = 'Какая <em>информация</em> Вас интересует?'
-    await bot.send_message(chat_id, text=mes, reply_markup=markup, parse_mode='HTML')
+    await message.answer(text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
 
 
-@dp.callback_query_handler(func=lambda callback: callback.data == 'csu' or callback.data == 'it')
-async def callback_mes(chat_id: int):
+@dp.callback_query(F.data == 'csu' or F.data == 'it')
+async def callback_mes(callback: types.CallbackQuery):
     if callback.data == 'csu':
-        await bot.send_message(chat_id, text="""<b><em>Сайты, связанные с ЧелГУ</em></b>:
+        await callback.message.answer(text="""<b><em>Сайты, связанные с ЧелГУ</em></b>:
         <u>Мудл ЧелГУ</u>- супер сайт с курсами
         <u>Мудл ИИТ</u>-мега сайт с курсами всеми
         <u>Сайт ЧелГУ</u>
@@ -118,11 +114,10 @@ async def callback_mes(chat_id: int):
         <u>Профсоюзный Комитет(вк)</u>-не лезь,сожрет
         
         <em>Хочешь ссылки? Жми /links_csu</em>""", parse_mode='HTML')
-        await bot.answer_callback_query(callback.id)
     elif callback.data == 'it':
-        await bot.send_message(chat_id, text= """<b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
+        await callback.message.answer(text="""<b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
         <u>Habr</u> - сайт, созданный для публикации новостей, аналитических статей, мыслей, связанных с информационными технологиями и интернетом.
-        <u>GitHab</u> - крупнейший веб-сервис для хостинга IT-проектов и их совместной разработки. На сайте представлен свободный исходный код, с которым вы можете ознакомиться.
+        <u>GitHub</u> - крупнейший веб-сервис для хостинга IT-проектов и их совместной разработки. На сайте представлен свободный исходный код, с которым вы можете ознакомиться.
         <u>Metanit</u> - сайт посвящен различным языкам и технологиям программирования, компьютерам, мобильным платформам и ИТ-технологиям c различные руководства и учебные материалы, статьи и примеры
         <u>Открытый лекторий Летних школ от Яндекса</u> - более 150 лекций в онлайн-формате, общение с топовыми экспертами из Яндекса, прокачка знаний по востребованным IT‑специальностям и решение сложных бизнес‑кейсов
         <u>Киберфорум</u> - форум программистов и системных администраторов, помощь в решении задач по программированию, математике, физике и другим наукам, решение проблем с компьютером, операционными системами
@@ -130,11 +125,10 @@ async def callback_mes(chat_id: int):
         <u>Roadmap</u> - собрание дорожных карт, руководств и другого образовательного контента, которое поможет разработчикам выбрать правильный путь и направлять их обучение.
         
         <em>Заинтересовало? Жми /links_it для получения ссылок</em>""", parse_mode='HTML')
-        await bot.answer_callback_query(callback.id)  # обработка команды закончена
 
 
-@dp.message_handler(commands=['links_csu'])
-async def csu(chat_id: int, bot: Bot):
+@dp.message(commands=['links_csu'])
+async def csu(message: types.Message):
     markup = types.InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Мудл ЧелГУ', url='https://moodle.uio.csu.ru/')
     btn2 = types.InlineKeyboardButton(text='Мудл ИИТ', url='https://eu.iit.csu.ru')
@@ -147,14 +141,14 @@ async def csu(chat_id: int, bot: Bot):
     markup.row(btn5)
     markup.row(btn6)
     mes = 'Выберите <em>рессурс</em>, на который хотите перейти'
-    await bot.send_message(chat_id, text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
+    await message.answer(text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
 
 
-@dp.message_handler(commands=['links_it'])
-async def it(chat_id: int, bot: Bot):
+@dp.message(commands=['links_it'])
+async def it(message: types.Message):
     markup = types.InlineKeyboardBuider()
     btn1 = types.InlineKeyboardButton(text='Habr', url='https://habr.com/ru/')
-    btn2 = types.InlineKeyboardButton(text='GitHab', url='https://github.com/')
+    btn2 = types.InlineKeyboardButton(text='GitHub', url='https://github.com/')
     btn3 = types.InlineKeyboardButton(text='Metanit', url='https://metanit.com/')
     btn4 = types.InlineKeyboardButton(text='Открытый лекторий Летних школ от Яндекса', url='https://yandex.ru/yaintern/schools/open-lectures')
     btn5 = types.InlineKeyboardButton(text='Киберфорум', url='https://www.cyberforum.ru/')
@@ -165,7 +159,8 @@ async def it(chat_id: int, bot: Bot):
     markup.row(btn5, btn7)
     markup.row(btn6)
     mes = 'Выберите <em>рессурс</em>, на который хотите перейти'
-    await bot.send_message(chat_id, text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
+    await message.answer(text=mes, reply_markup=markup.as_markup(), parse_mode='HTML')
 
 
-bot.polling(none_stop=True)  # бот работает бесконечно, процесс не завершается(bot.infinity_polling()-для бесконечн работы
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
