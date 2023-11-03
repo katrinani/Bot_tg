@@ -1,13 +1,20 @@
+import sqlite3 as sq
 import aiogram
 from aiogram.types import FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, types
 from aiogram.utils import executor
+from aiogram.dispatcher import Dispatcher
+from db_map import db_start, create_profile
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
-dp = Dispatcher()
+dp = Dispatcher(bot)
 
 
-@dp.message_handler(commands=['start', 'help'])
+async def on_startup():
+    await db_start
+
+
+@dp.message(commands=['start', 'help'])
 async def main(chat_id: int):
     mess = """<b><em>Вот, с чем я могу тебе помочь</em></b>:
     <em>/map</em> - выведу карты всех этажей главного корпуса и помогу найти дорогу до 4 корпуса
@@ -16,11 +23,12 @@ async def main(chat_id: int):
     <em>/links_csu</em> - выведу ссылки, связанные с ЧелГУ и деятелностью его студентов
     <em>/links_it</em> - выведу полезные ссылки, помогающие в освоении it профессии
     <em>/help</em> - расскажу ещё раз про свои функции"""
-    await bot.send_message(
+    await message.answer(
         chat_id,
         text=mess,
         parse_mode='HTML'
         )
+    await create_profile(user_id=message.from_user.id)
 
 
 @dp.message(commands=['map'])
@@ -210,4 +218,7 @@ async def it(message: types.Message):
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp,
+                           skip_updates=True,
+                           on_startup=on_startup
+                           )
