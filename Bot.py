@@ -1,88 +1,99 @@
 import sqlite3 as sq
 import aiogram
+from aiogram import Router
 from aiogram.types import FSInputFile
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram import Bot, types
-from aiogram.utils import executor
-from aiogram.dispatcher import Dispatcher
-from db_map import db_start, create_profile
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram import Bot, types, Dispatcher
+from db_map import db_start, create_profile
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram import F
+from aiogram.types import Message
+from aiogram.filters import Command, StateFilter
+from aiogram.enums import ParseMode
+
 
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
 storage = MemoryStorage()
-dp = Dispatcher(bot,
-                storage=storage)
+dp = Dispatcher(storage=storage)  # не нравится переменная bot в аргументах
+router = Router()
 
 
 async def on_startup():
     await db_start
 
 
-class ProfileStatesGroup(StatesGroup):
+class ProfileStatesGroup(StatesGroup):  # cоздаем класс  насследующийся от StatesGroup
     group = State()  # статус ожидания на group
 
 
-@dp.message_handler(commands=['start'])
-async def cmd_start(message: types.Message) -> None:
+@dp.message(F.text, Command('start'))
+async def cmd_start(message: Message) -> None:
     await message.answer('Welcome! So as to create profile - type /create',
                          reply_markup=get_kb())
 
     await create_profile(user_id=message.from_user.id)
 
 
-def get_kb() -> ReplyKeyboardMarkup:
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(KeyboardButton('/create'))
+def get_kb() -> ReplyKeyboardMarkup:  # возможно прейдется добавить types
+    bt = [types.KeyboardButton(text='/create')]
+    kb = types.ReplyKeyboardMarkup(
+        keyboard=[bt],
+        resize_keyboard=True,
+        one_time_keyboard=True)
 
     return kb
 
 
-@dp.message_handler(commands=['create'])
-async def cmd_create(message: types.Message) -> None:
-    await message.reply("Для начала раоты даате сначала уточним вашу группу. Введите ее в формате 'ПИ'",
+@dp.message(F.text, Command('create'))
+async def cmd_create(message: Message) -> None:
+    await message.reply(text="Для начала раоты даате сначала уточним вашу группу. Введите ее в формате 'ПИ'\
+     Если хотите прекратить ввод нажмите cancel",
                         reply_markup=get_cancel_kb())
-    await ProfileStatesGroup.group.set()  # установили состояние ожидания группы
+    await state.set_state(ProfileStatesGroup.group)  # установили состояние ожидания группы
 
 
 def get_cancel_kb() -> ReplyKeyboardMarkup:
-    kb = ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.add(KeyboardButton('/cancel'))
+    bt = [types.KeyboardButton(text='/cancel')]
+    kb = ReplyKeyboardMarkup(keyboard=[bt], resize_keyboard=True)
 
     return kb
 
 
-@dp.message_handler(commands=['cancel'], state='*')  # * - любое состояние
-async def cmd_cancel(message: types.Message, state: FSMContext):
+@dp.message(F.text, Command('cancel'), StateFilter(None))  # StateFilter(None/Any)- любое состояние
+async def cmd_cancel(message: Message, state: FSMContext):
     if state is None:
         return
 
     await state.finish()
-    await message.reply('Вы прервали ввод группы',
-                        reply_markup=get_kb())
+    await message.answer(text='Вы прервали ввод группы', reply_markup=get_kb())
 
 
-@dp.message_handler(content_types=['text'], state=ProfileStatesGroup.group)
-async def load_group(message: types.Message, state: FSMContext) -> None:
+@router.message(ProfileStatesGroup.group)
+# @dp.message(Command('text'))
+async def load_group(message: Message, state: FSMContext) -> None:
     async with state.proxy() as data:  # открыть локальное хранилище данных
         data['group'] = message.text
-        await message.answer(chat_id=message.from_user.id, mes=f"Ваша группа :{data['text']}")
+        if message.text != message.text.upper():
+            await message.reply('Введите группу в верхнем регистре (пр. ПИ)')
+        else:
+            await message.reply(chat_id=message.from_user.id, text=f"Ваша группа :{data['text']}")
 
-    await message.answer('Запомню! Теперь можно продолжить')
+    await message.reply('Запомню! Теперь можно продолжить')
     await state.finish()
 
 
-@dp.message_handler(
-    lambda message: message.text != message.text.upper(),
-    state=ProfileStatesGroup.group
-)  # если сообщение не в верхнем регистре и в состоянии ожидания
-async def check_age(message: types.Message):
-    await message.reply('Введите группу в верхнем регистре (пр. ПИ)')
+# @router.message(
+#     lambda message: message.text != message.text.upper(),
+#     state=ProfileStatesGroup.group
+# )  # если сообщение не в верхнем регистре и в состоянии ожидания
+# async def check_age(message: Message):
+#     await message.reply('Введите группу в верхнем регистре (пр. ПИ)')
 
 
-@dp.message(commands=['help'])
+@dp.message(F.text, Command('help'))
 async def main(chat_id: int):
     mess = """<b><em>Вот, с чем я могу тебе помочь</em></b>:
     <em>/map</em> - выведу карты всех этажей главного корпуса и помогу найти дорогу до 4 корпуса
@@ -94,12 +105,12 @@ async def main(chat_id: int):
     await message.answer(
         chat_id,
         text=mess,
-        parse_mode='HTML'
+        parse_mode=ParseMode.HTML
         )
-    await create_profile(user_id=message.from_user.id)
 
 
-@dp.message(commands=['map'])
+
+@dp.message(F.text, Command('map'))
 async def map_csu(message: types.Message):
     markup = types.InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='0 этаж', callback_data='0fl')
@@ -118,7 +129,7 @@ async def map_csu(message: types.Message):
     await message.answer(
         text='Какой <em>этаж/корпус</em> Вас интересует?',
         reply_markup=markup.as_markup(),
-        parse_mode='HTML'
+        parse_mode=ParseMode.HTML
     )
 
 
@@ -130,8 +141,8 @@ async def callback_message(callback: types.CallbackQuery):
     await callback.message.answer_photo(file)
 
 
-@dp.message(commands=['timetable'])
-async def timetable(message: types.Message):
+@dp.message(F.text, Command('timetable'))
+async def timetable(message: Message):
     markup = types.InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Нечетная неделя (1)', callback_data='n1')
     btn2 = types.InlineKeyboardButton(text='Четная неделя (2)', callback_data='n2')
@@ -140,7 +151,7 @@ async def timetable(message: types.Message):
     await message.answer(
         text='Выберите <em> неделю </em>',
         reply_markup=markup.as_markup(),
-        parse_mode='HTML'
+        parse_mode=ParseMode.HTML
     )
 
 
@@ -187,8 +198,8 @@ async def step(callback: types.CallbackQuery):
     await callback.message.answer_photo(file)
 
 
-@dp.message(commands=['info'])
-async def info(message: types.Message):
+@dp.message(F.text, Command('info'))
+async def info(message: Message):
     markup = types.InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Информация о интернет-ресурсах ЧелГУ', callback_data='csu')
     btn2 = types.InlineKeyboardButton(text='Ресурсы для программистов', callback_data='it')
@@ -197,7 +208,7 @@ async def info(message: types.Message):
     await message.answer(
         text='Какая <em>информация</em> Вас интересует?',
         reply_markup=markup.as_markup(),
-        parse_mode='HTML'
+        parse_mode=ParseMode.HTML
     )
 
 
@@ -243,8 +254,8 @@ async def callback_mes(callback: types.CallbackQuery):
         )
 
 
-@dp.message(commands=['links_csu'])
-async def csu(message: types.Message):
+@dp.message(F.text, Command('links_csu'))
+async def csu(message: Message):
     markup = types.InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Мудл ЧелГУ', url='https://moodle.uio.csu.ru/')
     btn2 = types.InlineKeyboardButton(text='Мудл ИИТ', url='https://eu.iit.csu.ru')
@@ -259,12 +270,12 @@ async def csu(message: types.Message):
     await message.answer(
         text='Выберите <em>рессурс</em>, на который хотите перейти',
         reply_markup=markup.as_markup(),
-        parse_mode='HTML'
+        parse_mode=ParseMode.HTML
     )
 
 
-@dp.message(commands=['links_it'])
-async def it(message: types.Message):
+@dp.message(F.text, Command('links_it'))
+async def it(message: Message):
     markup = types.InlineKeyboardBuider()
     btn1 = types.InlineKeyboardButton(text='Habr', url='https://habr.com/ru/')
     btn2 = types.InlineKeyboardButton(text='GitHub', url='https://github.com/')
@@ -281,12 +292,26 @@ async def it(message: types.Message):
     await message.answer(
         text='Выберите <em>рессурс</em>, на который хотите перейти',
         reply_markup=markup.as_markup(),
-        parse_mode='HTML'
+        parse_mode=ParseMode.HTML
     )
 
 
-if __name__ == '__main__':
-    executor.start_polling(dp,
-                           skip_updates=True,
-                           on_startup=on_startup
-                           )
+async def main():
+    await dp.start_polling(bot,
+                            skip_updates=True,
+                            on_startup=on_startup
+                            )
+
+if __name__ == "__main__":
+    asyncio.run(main())
+# async def main():
+# # Запуск бота с помощью метода start_polling()
+#     await dispatcher.start_polling()
+#
+# if __name__ == '__main__':
+#     asyncio.run(main())
+# if __name__ == '__main__':
+#     executor.start_polling(dp,
+#                            skip_updates=True,
+#                            on_startup=on_startup
+#                            )
