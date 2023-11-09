@@ -1,32 +1,30 @@
 import sqlite3 as sq
 import aiogram
-from aiogram import Router
-from aiogram.types import FSInputFile
+import asyncio
+from aiogram import Router, F ,Bot , types, Dispatcher
+from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram import Bot, types, Dispatcher
 from db_map import db_start, create_profile
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram import F
-from aiogram.types import Message
 from aiogram.filters import Command, StateFilter
 from aiogram.enums import ParseMode
 
-
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
-storage = MemoryStorage()
-dp = Dispatcher(storage=storage)  # не нравится переменная bot в аргументах
+dp = Dispatcher()
 router = Router()
 
 
 async def on_startup():
-    await db_start
+    await db_start()
 
 
 class ProfileStatesGroup(StatesGroup):  # cоздаем класс  насследующийся от StatesGroup
-    group = State()  # статус ожидания на group
+    choosing_group = State()  # статус ожидания на group
+
+
+group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
 
 
 @dp.message(F.text, Command('start'))
@@ -37,7 +35,7 @@ async def cmd_start(message: Message) -> None:
     await create_profile(user_id=message.from_user.id)
 
 
-def get_kb() -> ReplyKeyboardMarkup:  # возможно прейдется добавить types
+def get_kb() -> ReplyKeyboardMarkup:
     bt = [types.KeyboardButton(text='/create')]
     kb = types.ReplyKeyboardMarkup(
         keyboard=[bt],
@@ -48,11 +46,12 @@ def get_kb() -> ReplyKeyboardMarkup:  # возможно прейдется до
 
 
 @dp.message(F.text, Command('create'))
-async def cmd_create(message: Message) -> None:
-    await message.reply(text="Для начала раоты даате сначала уточним вашу группу. Введите ее в формате 'ПИ'\
+async def cmd_create(message: Message, state: FSMContext):
+    await message.reply(
+        text="Для начала раоты даате сначала уточним вашу группу. Введите ее в формате 'ПИ'\
      Если хотите прекратить ввод нажмите cancel",
-                        reply_markup=get_cancel_kb())
-    await state.set_state(ProfileStatesGroup.group)  # установили состояние ожидания группы
+        reply_markup=get_cancel_kb())
+    await state.set_state(ProfileStatesGroup.choosing_group)  # установили состояние ожидания группы
 
 
 def get_cancel_kb() -> ReplyKeyboardMarkup:
@@ -62,39 +61,39 @@ def get_cancel_kb() -> ReplyKeyboardMarkup:
     return kb
 
 
-@dp.message(F.text, Command('cancel'), StateFilter(None))  # StateFilter(None/Any)- любое состояние
+@router.message(F.text, Command(commands='cancel'), StateFilter(None))  # StateFilter(None/Any)- любое состояние
 async def cmd_cancel(message: Message, state: FSMContext):
     if state is None:
         return
 
-    await state.finish()
-    await message.answer(text='Вы прервали ввод группы', reply_markup=get_kb())
+    await state.finish()  # или await state.clear()
+    await message.answer(text='Действие отменено', reply_markup=get_kb())
 
 
-@router.message(ProfileStatesGroup.group)
-# @dp.message(Command('text'))
+@router.message(
+    F.text.in_(group_name),
+    ProfileStatesGroup.choosing_group
+)  # состояние ожидания группы и текст из списка
 async def load_group(message: Message, state: FSMContext) -> None:
     async with state.proxy() as data:  # открыть локальное хранилище данных
-        data['group'] = message.text
-        if message.text != message.text.upper():
-            await message.reply('Введите группу в верхнем регистре (пр. ПИ)')
-        else:
-            await message.reply(chat_id=message.from_user.id, text=f"Ваша группа :{data['text']}")
+        data['user_group'] = message.text
+        await message.reply(chat_id=message.from_user.id, text=f"Ваша группа :{data['text']}")
 
     await message.reply('Запомню! Теперь можно продолжить')
     await state.finish()
 
 
-# @router.message(
-#     lambda message: message.text != message.text.upper(),
-#     state=ProfileStatesGroup.group
-# )  # если сообщение не в верхнем регистре и в состоянии ожидания
-# async def check_age(message: Message):
-#     await message.reply('Введите группу в верхнем регистре (пр. ПИ)')
+@router.message(StateFilter('ProfileStatesGroup:choosing_group'), F.text.not_in_(group_name))
+# если сообщение не в верхнем регистре и в состоянии ожидания lambda message: message.text != message.text.upper()
+async def check_age(message: Message):
+    await message.reply('Введите группу в верхнем регистре (пр. ПИ)')
+
+
+# ----------------------------------------------------------------------
 
 
 @dp.message(F.text, Command('help'))
-async def main(chat_id: int):
+async def help_ph(chat_id: int):
     mess = """<b><em>Вот, с чем я могу тебе помочь</em></b>:
     <em>/map</em> - выведу карты всех этажей главного корпуса и помогу найти дорогу до 4 корпуса
     <em>/timetable</em> - покажу актуальное рассписание на конкретный день
@@ -107,7 +106,6 @@ async def main(chat_id: int):
         text=mess,
         parse_mode=ParseMode.HTML
         )
-
 
 
 @dp.message(F.text, Command('map'))
@@ -190,8 +188,10 @@ async def one_step(callback: types.CallbackQuery):
             parse_mode='HTML'
         )
 
+callback_timetable = ['1_1d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
 
-@dp.callback_query(str(F.data) in '1_1d1_2d1_3d1_4d1_5d1_6d2_1d2_2d2_3d2_4d2_5d2_6d')
+# , str(F.data) in '1_2d1_3d1_4d1_5d1_6d2_1d2_2d2_3d2_4d2_5d2_6d'
+@dp.callback_query(F.data.in_(callback_timetable))
 async def step(callback: types.CallbackQuery):
     first_char = str(callback.data)[0:3]
     file = FSInputFile(f'./day{first_char}.jpg')
@@ -297,10 +297,9 @@ async def it(message: Message):
 
 
 async def main():
-    await dp.start_polling(bot,
-                            skip_updates=True,
-                            on_startup=on_startup
-                            )
+    # await bot.delete_webhook(drop_pending_updates=True), allowed_updates=dp.resolve_used_update_types())  # пропуска старых апдейтов
+    dp.startup.register(on_startup)
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())

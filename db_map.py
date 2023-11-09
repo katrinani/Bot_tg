@@ -1,29 +1,37 @@
 import sqlite3 as sq
 
+# global conn, cur
+
 
 async def db_start():
-    global db, cur
-    db = sqlite3.connect('my_database.db')
-    cur = db.cursor()  # cоздаем таблицу users
+    # объявление, которое выполняется для всего текущего блока кода
     #  объект "cursor" для выполнения SQL-запросов и операций с базой данных
+    conn = sq.connect('my_database.db')
+    cur = conn.cursor()
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS Users (   
-    user_id INTEGER PRIMARY KEY,
-    group TEXT
+    CREATE TABLE IF NOT EXISTS profile (
+    user_id TEXT PRIMARY KEY, 
+    user_group TEXT
     )
     ''')
-    db.commit()  # cохраняем изменения
+
+    conn.commit()  # cохраняем изменения
+    # conn.close()
 
 
 async def create_profile(user_id):
-    user = cur.execute('SELECT 1 FROM profile WHERE user_id == "{key}"'.format(key=user_id)).fetchone()
+    conn = sq.connect('my_database.db')
+    cur = conn.cursor()
+    user = cur.execute("SELECT 1 FROM profile WHERE user_id == '{key}'".format(key=user_id)).fetchone()
     if not user:
-        cur.execute("INSERT INTO profile VALUES('?,?,?)", (user_id, '', ''))
-        db.commit()
+        cur.execute("INSERT INTO profile VALUES(?,?)", (user_id, ''))
+        conn.commit()
 
 
 async def edit_profile(state, user_id):
     async with state.proxy() as data:
-        cur.execute("UPDATE profile SET group == '{}' WHERE user_id == '{}'".format(
-            data['group'], user_id))
-        db.commit()
+        conn = sq.connect('my_database.db')
+        cur = conn.cursor()
+        cur.execute("UPDATE profile SET user_group == '{}' WHERE user_id == '{}'".format(
+            data['user_group'], user_id))
+        conn.commit()
