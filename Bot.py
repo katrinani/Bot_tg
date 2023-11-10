@@ -3,8 +3,8 @@ import aiogram
 import asyncio
 from aiogram import Router, F, Bot, types, Dispatcher
 from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from db_map import db_start, create_profile, edit_profile
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -14,7 +14,10 @@ from aiogram.enums import ParseMode
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
 dp = Dispatcher(storage=MemoryStorage())
 router = Router()
+
 group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
+callback_map = ['0fl', '1fl', '2fl', '3fl', '4fl']
+callback_timetable = ['1_1d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
 
 
 async def on_startup():
@@ -83,8 +86,23 @@ async def check_group(message: Message):
 # ----------------------------------------------------------------------
 
 
+@dp.callback_query(F.data.in_(callback_map))
+async def callback_message(callback: types.CallbackQuery):
+    first_char = str(callback.data)[0]  # 1 число поступающего колбэка
+    file = FSInputFile(f'./Этаж {first_char}.png')
+    await callback.message.answer(text=f'{first_char} этаж')  # вызов 90 этажа пока не возможен, jpg формат
+    await callback.message.answer_photo(file)
+
+
+@dp.callback_query(F.data.in_(callback_timetable))
+async def step(callback: types.CallbackQuery):
+    first_char = str(callback.data)[0:3]
+    file = FSInputFile(f'./day{first_char}.jpg')
+    await callback.message.answer_photo(file)
+
+
 @dp.message(F.text, Command('help'))
-async def help_ph(chat_id: int):
+async def help_ph(message: types.Message):
     mess = """<b><em>Вот, с чем я могу тебе помочь</em></b>:
     <em>/map</em> - выведу карты всех этажей главного корпуса и помогу найти дорогу до 4 корпуса
     <em>/timetable</em> - покажу актуальное рассписание на конкретный день
@@ -93,7 +111,6 @@ async def help_ph(chat_id: int):
     <em>/links_it</em> - выведу полезные ссылки, помогающие в освоении it профессии
     <em>/help</em> - расскажу ещё раз про свои функции"""
     await message.answer(
-        chat_id,
         text=mess,
         parse_mode=ParseMode.HTML
         )
@@ -101,7 +118,7 @@ async def help_ph(chat_id: int):
 
 @dp.message(F.text, Command('map'))
 async def map_csu(message: types.Message):
-    markup = types.InlineKeyboardBuilder()
+    markup = InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='0 этаж', callback_data='0fl')
     btn2 = types.InlineKeyboardButton(text='1 этаж', callback_data='1fl')
     btn3 = types.InlineKeyboardButton(text='2 этаж', callback_data='2fl')
@@ -122,17 +139,9 @@ async def map_csu(message: types.Message):
     )
 
 
-@dp.callback_query(F.data == '0fl' or F.data == '1fl' or F.data == '2fl' or F.data == '3fl' or F.data == '4fl')
-async def callback_message(callback: types.CallbackQuery):
-    first_char = str(callback.data)[0]  # 1 число поступающего колбэка
-    file = FSInputFile(f'./Этаж {first_char}.png')
-    await callback.message.answer(chat_id, text=f'{first_char} этаж')  # вызов 90 этажа пока не возможен, jpg формат
-    await callback.message.answer_photo(file)
-
-
 @dp.message(F.text, Command('timetable'))
 async def timetable(message: Message):
-    markup = types.InlineKeyboardBuilder()
+    markup = InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Нечетная неделя (1)', callback_data='n1')
     btn2 = types.InlineKeyboardButton(text='Четная неделя (2)', callback_data='n2')
     markup.row(btn1)
@@ -147,7 +156,7 @@ async def timetable(message: Message):
 @dp.callback_query(F.data == 'n1' or F.data == 'n2')
 async def one_step(callback: types.CallbackQuery):
     if callback.data == 'n1':
-        markup2 = types.InlineKeyboardBuilder()
+        markup2 = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(text='Понедельник', callback_data='1_1d')
         btn2 = types.InlineKeyboardButton(text='Вторник', callback_data='1_2d')
         btn3 = types.InlineKeyboardButton(text='Среда', callback_data='1_3d')
@@ -163,7 +172,7 @@ async def one_step(callback: types.CallbackQuery):
             parse_mode='HTML'
         )
     elif callback.data == 'n2':
-        markup3 = types.InlineKeyboardBuilder()
+        markup3 = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(text='Понедельник', callback_data='2_1d')
         btn2 = types.InlineKeyboardButton(text='Вторник', callback_data='2_2d')
         btn3 = types.InlineKeyboardButton(text='Среда', callback_data='2_3d')
@@ -179,19 +188,10 @@ async def one_step(callback: types.CallbackQuery):
             parse_mode='HTML'
         )
 
-callback_timetable = ['1_1d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
-
-# , str(F.data) in '1_2d1_3d1_4d1_5d1_6d2_1d2_2d2_3d2_4d2_5d2_6d'
-@dp.callback_query(F.data.in_(callback_timetable))
-async def step(callback: types.CallbackQuery):
-    first_char = str(callback.data)[0:3]
-    file = FSInputFile(f'./day{first_char}.jpg')
-    await callback.message.answer_photo(file)
-
 
 @dp.message(F.text, Command('info'))
 async def info(message: Message):
-    markup = types.InlineKeyboardBuilder()
+    markup = InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Информация о интернет-ресурсах ЧелГУ', callback_data='csu')
     btn2 = types.InlineKeyboardButton(text='Ресурсы для программистов', callback_data='it')
     markup.row(btn1)
@@ -208,21 +208,21 @@ async def callback_mes(callback: types.CallbackQuery):
     if callback.data == 'csu':
         await callback.message.answer(
             text="""<b><em>Сайты, связанные с ЧелГУ</em></b>:
-            <u>Мудл ЧелГУ</u> - система управления электронными образовательными курсами (здесь ты можешь \
-            найти курсы от преподавателей с различных факультетов)
+            <u>Мудл ЧелГУ</u> - система управления электронными образовательными курсами (здесь ты можешь\
+        найти курсы от преподавателей с различных факультетов)
             <u>Мудл ИИТ</u> - здесь ты можешь найти курсы от преподавателей из ИИТ
             <u>Сайт ЧелГУ</u> - новостной сайт, где ты можешь найти информацию о ЧелГУ в целом\
-             (структура, расписание и многое другое)
+        (структура, расписание и многое другое)
             <u>Научная Библиотека ЧелГУ</u> - огромный каталог электронных книг и прочих информационных ресурсов
-            <u>ЦТС(ЦентрТворчестваСтудентов)</u> - здесь можно узнать о творческой внеучебной жизни вуза \
-            (информация по мероприятиям, ссылки на кружки по пению, танцам и т.д.)
-            <u>Профсоюзный Комитет(вк)</u> - информация для участников профсоюза (о мероприятиях, \
-            льготах, как вступить и т.п.)
+            <u>ЦТС(ЦентрТворчестваСтудентов)</u> - здесь можно узнать о творческой внеучебной жизни вуза\
+        (информация по мероприятиям, ссылки на кружки по пению, танцам и т.д.)
+            <u>Профсоюзный Комитет(вк)</u> - информация для участников профсоюза (о мероприятиях,\
+        льготах, как вступить и т.п.)
         
             <em>Хочешь ссылки? Жми /links_csu</em>""",
             parse_mode='HTML'
         )
-    elif callback.data == 'it':
+    else: #callback.data == 'it':
         await callback.message.answer(
             text="""<b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
             <u>Habr</u> - сайт, созданный для публикации новостей, аналитических статей, мыслей, \
@@ -247,7 +247,7 @@ async def callback_mes(callback: types.CallbackQuery):
 
 @dp.message(F.text, Command('links_csu'))
 async def csu(message: Message):
-    markup = types.InlineKeyboardBuilder()
+    markup = InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Мудл ЧелГУ', url='https://moodle.uio.csu.ru/')
     btn2 = types.InlineKeyboardButton(text='Мудл ИИТ', url='https://eu.iit.csu.ru')
     btn3 = types.InlineKeyboardButton(text='Сайт ЧелГУ', url='https://www.csu.ru/')
@@ -267,7 +267,7 @@ async def csu(message: Message):
 
 @dp.message(F.text, Command('links_it'))
 async def it(message: Message):
-    markup = types.InlineKeyboardBuider()
+    markup = InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(text='Habr', url='https://habr.com/ru/')
     btn2 = types.InlineKeyboardButton(text='GitHub', url='https://github.com/')
     btn3 = types.InlineKeyboardButton(text='Metanit', url='https://metanit.com/')
@@ -288,20 +288,9 @@ async def it(message: Message):
 
 
 async def main():
-    # await bot.delete_webhook(drop_pending_updates=True), allowed_updates=dp.resolve_used_update_types())  # пропуска старых апдейтов
     dp.startup.register(on_startup)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
-# async def main():
-# # Запуск бота с помощью метода start_polling()
-#     await dispatcher.start_polling()
-#
-# if __name__ == '__main__':
-#     asyncio.run(main())
-# if __name__ == '__main__':
-#     executor.start_polling(dp,
-#                            skip_updates=True,
-#                            on_startup=on_startup
-#                            )
+
