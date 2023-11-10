@@ -1,10 +1,10 @@
 import sqlite3 as sq
 import aiogram
 import asyncio
-from aiogram import Router, F ,Bot , types, Dispatcher
+from aiogram import Router, F, Bot, types, Dispatcher
 from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from db_map import db_start, create_profile
+from db_map import db_start, create_profile, edit_profile
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -12,8 +12,9 @@ from aiogram.filters import Command, StateFilter
 from aiogram.enums import ParseMode
 
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
-dp = Dispatcher()
+dp = Dispatcher(storage=MemoryStorage())
 router = Router()
+group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
 
 
 async def on_startup():
@@ -24,15 +25,10 @@ class ProfileStatesGroup(StatesGroup):  # cоздаем класс  нассле
     choosing_group = State()  # статус ожидания на group
 
 
-group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
-
-
-@dp.message(F.text, Command('start'))
-async def cmd_start(message: Message) -> None:
-    await message.answer('Welcome! So as to create profile - type /create',
-                         reply_markup=get_kb())
-
-    await create_profile(user_id=message.from_user.id)
+def get_cancel_kb() -> ReplyKeyboardMarkup:
+    bt = [types.KeyboardButton(text='/cancel')]
+    kb = ReplyKeyboardMarkup(keyboard=[bt], resize_keyboard=True)
+    return kb
 
 
 def get_kb() -> ReplyKeyboardMarkup:
@@ -41,52 +37,47 @@ def get_kb() -> ReplyKeyboardMarkup:
         keyboard=[bt],
         resize_keyboard=True,
         one_time_keyboard=True)
-
     return kb
+
+
+@dp.message(F.text, Command('start'))
+async def cmd_start(message: Message) -> None:
+    await message.answer('Добро пожаловать! Для начала давайте создадим профиль. Нажмите /create',
+                         reply_markup=get_kb())
+    await create_profile(user_id=message.from_user.id)
 
 
 @dp.message(F.text, Command('create'))
 async def cmd_create(message: Message, state: FSMContext):
     await message.reply(
-        text="Для начала раоты даате сначала уточним вашу группу. Введите ее в формате 'ПИ'\
-     Если хотите прекратить ввод нажмите cancel",
+        text="Для начала работы давате сначала уточним вашу группу и номер группы. Введите их в формате 'ПИ101'\
+    \nЕсли хотите прекратить создание профиля нажмите cancel",
         reply_markup=get_cancel_kb())
     await state.set_state(ProfileStatesGroup.choosing_group)  # установили состояние ожидания группы
 
 
-def get_cancel_kb() -> ReplyKeyboardMarkup:
-    bt = [types.KeyboardButton(text='/cancel')]
-    kb = ReplyKeyboardMarkup(keyboard=[bt], resize_keyboard=True)
-
-    return kb
-
-
-@router.message(F.text, Command(commands='cancel'), StateFilter(None))  # StateFilter(None/Any)- любое состояние
+@dp.message(F.text, Command(commands='cancel'))
 async def cmd_cancel(message: Message, state: FSMContext):
     if state is None:
         return
-
-    await state.finish()  # или await state.clear()
+    await state.clear()
     await message.answer(text='Действие отменено', reply_markup=get_kb())
 
 
-@router.message(
+@dp.message(
     F.text.in_(group_name),
     ProfileStatesGroup.choosing_group
 )  # состояние ожидания группы и текст из списка
 async def load_group(message: Message, state: FSMContext) -> None:
-    async with state.proxy() as data:  # открыть локальное хранилище данных
-        data['user_group'] = message.text
-        await message.reply(chat_id=message.from_user.id, text=f"Ваша группа :{data['text']}")
-
-    await message.reply('Запомню! Теперь можно продолжить')
-    await state.finish()
+    user_group = message.text
+    await message.reply(text=f"Ваша группа :{user_group}\nТеперь можно продолжить")
+    await edit_profile(user_group, user_id=message.from_user.id)
+    await state.clear()
 
 
-@router.message(StateFilter('ProfileStatesGroup:choosing_group'), F.text.not_in_(group_name))
-# если сообщение не в верхнем регистре и в состоянии ожидания lambda message: message.text != message.text.upper()
-async def check_age(message: Message):
-    await message.reply('Введите группу в верхнем регистре (пр. ПИ)')
+@dp.message(StateFilter('ProfileStatesGroup:choosing_group'))  #то же состояние, но на вход пришли другие данные
+async def check_group(message: Message):
+    await message.reply('Нет такой группы. Попробуйте ещё раз ввести группу и номер в верхнем регистре (пр. ПИ101)')
 
 
 # ----------------------------------------------------------------------
