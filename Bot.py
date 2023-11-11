@@ -3,14 +3,17 @@ import aiogram
 import asyncio
 from aiogram import Router, F, Bot, types, Dispatcher
 from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
-from db_map import db_start, create_profile, edit_profile
+from db_map import db_start, create_profile, edit_profile, check_group_of_student, add_remind, remind_mess
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, StateFilter
 from aiogram.enums import ParseMode
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime
 
+scheduler = AsyncIOScheduler()
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
 dp = Dispatcher(storage=MemoryStorage())
 router = Router()
@@ -18,6 +21,7 @@ router = Router()
 group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
 callback_map = ['0fl', '1fl', '2fl', '3fl', '4fl']
 callback_timetable = ['1_1d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
+tg_user_id = ''
 
 
 async def on_startup():
@@ -26,11 +30,17 @@ async def on_startup():
 
 class ProfileStatesGroup(StatesGroup):  # cоздаем класс  насследующийся от StatesGroup
     choosing_group = State()  # статус ожидания на group
+    make_remind = State()
+    choose_data = State()
 
 
 def get_cancel_kb() -> ReplyKeyboardMarkup:
     bt = [types.KeyboardButton(text='/cancel')]
-    kb = ReplyKeyboardMarkup(keyboard=[bt], resize_keyboard=True)
+    kb = ReplyKeyboardMarkup(
+        keyboard=[bt],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
     return kb
 
 
@@ -39,7 +49,8 @@ def get_kb() -> ReplyKeyboardMarkup:
     kb = types.ReplyKeyboardMarkup(
         keyboard=[bt],
         resize_keyboard=True,
-        one_time_keyboard=True)
+        one_time_keyboard=True
+    )
     return kb
 
 
@@ -47,6 +58,9 @@ def get_kb() -> ReplyKeyboardMarkup:
 async def cmd_start(message: Message) -> None:
     await message.answer('Добро пожаловать! Для начала давайте создадим профиль. Нажмите /create',
                          reply_markup=get_kb())
+
+    global tg_user_id
+    tg_user_id = str(message.from_user.id)
     await create_profile(user_id=message.from_user.id)
 
 
@@ -78,26 +92,30 @@ async def load_group(message: Message, state: FSMContext) -> None:
     await state.clear()
 
 
-@dp.message(StateFilter('ProfileStatesGroup:choosing_group'))  #то же состояние, но на вход пришли другие данные
+@dp.message(StateFilter('ProfileStatesGroup:choosing_group'))  # то же состояние, но на вход пришли другие данные
 async def check_group(message: Message):
     await message.reply('Нет такой группы. Попробуйте ещё раз ввести группу и номер в верхнем регистре (пр. ПИ101)')
 
 
 # ----------------------------------------------------------------------
+async def reminder(message: Message):
+    mess = await remind_mess(tg_user_id)
+    await message.answer('Привет! Тебе пришло напоминание: \n', mess)  # nекст из базы данных достать
 
 
 @dp.callback_query(F.data.in_(callback_map))
 async def callback_message(callback: types.CallbackQuery):
     first_char = str(callback.data)[0]  # 1 число поступающего колбэка
-    file = FSInputFile(f'./Этаж {first_char}.png')
-    await callback.message.answer(text=f'{first_char} этаж')  # вызов 90 этажа пока не возможен, jpg формат
+    file = FSInputFile(f'floor/Этаж {first_char}.png')
+    await callback.message.answer(text=f'{first_char} этаж')  # вызов 0 этажа пока не возможен, jpg формат
     await callback.message.answer_photo(file)
 
 
 @dp.callback_query(F.data.in_(callback_timetable))
 async def step(callback: types.CallbackQuery):
+    user_group = await check_group_of_student(tg_user_id)
     first_char = str(callback.data)[0:3]
-    file = FSInputFile(f'./day{first_char}.jpg')
+    file = FSInputFile(f'{user_group}/day{first_char}.jpg')  # вместо папки будет подключаться информаци о группе из бд
     await callback.message.answer_photo(file)
 
 
@@ -222,7 +240,7 @@ async def callback_mes(callback: types.CallbackQuery):
             <em>Хочешь ссылки? Жми /links_csu</em>""",
             parse_mode='HTML'
         )
-    else: #callback.data == 'it':
+    else:  # callback.data == 'it':
         await callback.message.answer(
             text="""<b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
             <u>Habr</u> - сайт, созданный для публикации новостей, аналитических статей, мыслей, \
@@ -287,10 +305,41 @@ async def it(message: Message):
     )
 
 
+@dp.message(Command('reminder'))
+async def start_remind(message: Message, state: FSMContext):
+    await message.answer('Какое напоминание хотите создать? Введите текст с напоминанием')
+    await state.set_state(ProfileStatesGroup.make_remind)  # вешаем статус ожидания ввода напоминания
+
+
+@dp.message(ProfileStatesGroup.make_remind)
+async def remind_to_bd(message: Message, state: FSMContext):
+    await add_remind(mess=message, user_id=tg_user_id)
+    await message.answer(
+        'Хорошо! Теперь введите дату и время, в формате: час минута день месяц год (прим: "18 50 30 11 2022")'
+    )
+    await state.set_state(ProfileStatesGroup.choose_data)
+
+
+@dp.message(ProfileStatesGroup.choose_data)
+async def remind(message: Message, state: FSMContext):
+    data_time = srt(message.from_user)
+    scheduler.add_job(
+        func=reminder,
+        trigger='date',
+        run_date=datetime(
+            hour=int(data_time[0:2]),
+            minute=int(data_time[3:5]),
+            day=int(data_time[6:8]),
+            month=int(data_time[9:11]),
+            year=int(data_time[12:16]))
+    )
+    await message.answer('Напоминание создано успешно!')
+    await state.clear()
+
+
 async def main():
     dp.startup.register(on_startup)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
-
