@@ -43,7 +43,7 @@ async def check_group_of_student(user_id: int) -> str:
 async def add_remind(mess, user_id):
     conn = sq.connect('database.db')
     cur = conn.cursor()
-    cur.execute(f"UPDATE profile SET user_mess == '{mess}' WHERE user_id == '{user_id}'")
+    cur.execute("UPDATE profile SET user_mess == '{}' WHERE user_id == '{}'".format(mess, user_id))
     conn.commit()
 
 

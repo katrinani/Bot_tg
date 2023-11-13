@@ -1,6 +1,7 @@
 import sqlite3 as sq
 import aiogram
 import asyncio
+import pytz
 from aiogram import Router, F, Bot, types, Dispatcher
 from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
 from db_map import db_start, create_profile, edit_profile, check_group_of_student, add_remind, remind_mess
@@ -98,7 +99,7 @@ async def check_group(message: Message):
 
 
 # ----------------------------------------------------------------------
-async def reminder(message: Message):
+async def reminder():
     mess = await remind_mess(tg_user_id)
     await message.answer('Привет! Тебе пришло напоминание: \n', mess)  # nекст из базы данных достать
 
@@ -313,7 +314,7 @@ async def start_remind(message: Message, state: FSMContext):
 
 @dp.message(ProfileStatesGroup.make_remind)
 async def remind_to_bd(message: Message, state: FSMContext):
-    await add_remind(mess=message, user_id=tg_user_id)
+    await add_remind(mess=message.text, user_id=tg_user_id)
     await message.answer(
         'Хорошо! Теперь введите дату и время, в формате: час минута день месяц год (прим: "18 50 30 11 2022")'
     )
@@ -322,7 +323,7 @@ async def remind_to_bd(message: Message, state: FSMContext):
 
 @dp.message(ProfileStatesGroup.choose_data)
 async def remind(message: Message, state: FSMContext):
-    data_time = srt(message.from_user)
+    data_time = message.text
     scheduler.add_job(
         func=reminder,
         trigger='date',
@@ -331,7 +332,7 @@ async def remind(message: Message, state: FSMContext):
             minute=int(data_time[3:5]),
             day=int(data_time[6:8]),
             month=int(data_time[9:11]),
-            year=int(data_time[12:16]))
+            year=int(data_time[12:]))
     )
     await message.answer('Напоминание создано успешно!')
     await state.clear()
