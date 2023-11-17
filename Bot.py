@@ -1,6 +1,7 @@
 import sqlite3 as sq
 import aiogram
 import asyncio
+import json
 from aiogram import F, Bot, types, Dispatcher
 from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
 from db_map import db_start, create_profile, edit_profile, check_group_of_student, check_role, output_all_id
@@ -11,14 +12,17 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, StateFilter
 from aiogram.enums import ParseMode
 
+with open('data.json', 'r') as json_file:
+    mes_data = json.load(json_file)
 
-scheduler = AsyncIOScheduler()
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
 dp = Dispatcher(storage=MemoryStorage())
 
 group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
 callback_map = ['0fl', '1fl', '2fl', '3fl', '4fl']
 callback_timetable = ['1_1d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
+callback_info = ['csu', 'it']
+callback_questions = ['que1', 'que2', 'que3', 'que4', 'que5', 'que6', 'que7', 'que8']
 tg_user_id = ''
 
 
@@ -115,15 +119,8 @@ async def step(callback: types.CallbackQuery):
 
 @dp.message(F.text, Command('help'))
 async def help_ph(message: types.Message):
-    mess = """<b><em>Вот, с чем я могу тебе помочь</em></b>:
-    <em>/map</em> - выведу карты всех этажей главного корпуса и помогу найти дорогу до 4 корпуса
-    <em>/timetable</em> - покажу актуальное рассписание на конкретный день
-    <em>/info</em> - дам описание полезной информации о учёбе
-    <em>/links_csu</em> - выведу ссылки, связанные с ЧелГУ и деятелностью его студентов
-    <em>/links_it</em> - выведу полезные ссылки, помогающие в освоении it профессии
-    <em>/help</em> - расскажу ещё раз про свои функции"""
     await message.answer(
-        text=mess,
+        text=mes_data['help'],
         parse_mode=ParseMode.HTML
         )
 
@@ -215,44 +212,16 @@ async def info(message: Message):
     )
 
 
-@dp.callback_query(F.data == 'csu' or F.data == 'it')
+@dp.callback_query(F.data.in_(callback_info))
 async def callback_mes(callback: types.CallbackQuery):
     if callback.data == 'csu':
         await callback.message.answer(
-            text="""<b><em>Сайты, связанные с ЧелГУ</em></b>:
-            <u>Мудл ЧелГУ</u> - система управления электронными образовательными курсами (здесь ты можешь\
-        найти курсы от преподавателей с различных факультетов)
-            <u>Мудл ИИТ</u> - здесь ты можешь найти курсы от преподавателей из ИИТ
-            <u>Сайт ЧелГУ</u> - новостной сайт, где ты можешь найти информацию о ЧелГУ в целом\
-        (структура, расписание и многое другое)
-            <u>Научная Библиотека ЧелГУ</u> - огромный каталог электронных книг и прочих информационных ресурсов
-            <u>ЦТС(ЦентрТворчестваСтудентов)</u> - здесь можно узнать о творческой внеучебной жизни вуза\
-        (информация по мероприятиям, ссылки на кружки по пению, танцам и т.д.)
-            <u>Профсоюзный Комитет(вк)</u> - информация для участников профсоюза (о мероприятиях,\
-        льготах, как вступить и т.п.)
-        
-            <em>Хочешь ссылки? Жми /links_csu</em>""",
+            text=mes_data['csu'],
             parse_mode='HTML'
         )
-    else:  # callback.data == 'it':
+    elif callback.data == 'it':
         await callback.message.answer(
-            text="""<b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
-            <u>Habr</u> - сайт, созданный для публикации новостей, аналитических статей, мыслей, \
-            связанных с информационными технологиями и интернетом.
-            <u>GitHub</u> - крупнейший веб-сервис для хостинга IT-проектов и их совместной разработки. \
-            На сайте представлен свободный исходный код, с которым вы можете ознакомиться.
-            <u>Metanit</u> - сайт посвящен различным языкам и технологиям программирования, компьютерам,\
-             мобильным платформам и ИТ-технологиям c различные руководства и учебные материалы, статьи и примеры
-            <u>Открытый лекторий Летних школ от Яндекса</u> - более 150 лекций в онлайн-формате, общение с топовыми\
-             экспертами из Яндекса, прокачка знаний по востребованным IT‑специальностям и решение сложных бизнес‑кейсов
-            <u>Киберфорум</u> - форум программистов и системных администраторов, помощь в решении задач по \
-            программированию, математике, физике и другим наукам, решение проблем с компьютером, операционными системами
-            <u>Библиотека программиста</u> - материалы, которые научат и помогут программировать. Книги и лекции,\
-             видеоуроки и советы, тесты знаний и обсуждение горячих тем
-            <u>Roadmap</u> - собрание дорожных карт, руководств и другого образовательного контента, которое\
-             поможет разработчикам выбрать правильный путь и направлять их обучение.
-        
-        <em>Заинтересовало? Жми /links_it для получения ссылок</em>""",
+            text=mes_data['it'],
             parse_mode='HTML'
         )
 
@@ -299,6 +268,28 @@ async def it(message: Message):
     )
 
 
+# команда, генерирующая сначала вопросы, а потом ответы на них
+@dp.message(F.text, Command('questions'))
+async def questions(message: Message):
+    markup = InlineKeyboardBuilder()
+    for num in range(1, 9):
+        btn = types.InlineKeyboardButton(text=f'№{num}', callback_data=f'que{num}')
+        markup.add(btn)
+    await message.answer(
+        text=mes_data['que'],
+        reply_markup=markup.as_markup(),
+        parse_mode=ParseMode.HTML
+    )
+
+
+@dp.message(F.data.in_(callback_questions))
+async def answer(callback: types.CallbackQuery):
+    for num in range(1, 9):
+        if callback.data == f'que{num}':
+            await callback.message.answer(text=mes_data[f'answ{num}'], parse_mode=ParseMode.HTML)
+
+
+# функция, высылающая спам рассылки от админа
 @dp.message(F.text, Command('spam'))
 async def can_spam(message: Message, state: FSMContext):
     user_role = await check_role(message.from_user.id)
