@@ -8,7 +8,7 @@ async def db_start():
     CREATE TABLE IF NOT EXISTS profile (
     user_id TEXT PRIMARY KEY, 
     user_group TEXT,
-    user_mess TEXT
+    user_role TEXT
     )
     ''')
     conn.commit()  # cохраняем изменения
@@ -40,17 +40,19 @@ async def check_group_of_student(user_id: int) -> str:
     return user_group[0]
 
 
-async def add_remind(mess, user_id):
+async def check_role(user_id):
     conn = sq.connect('database.db')
     cur = conn.cursor()
-    cur.execute("UPDATE profile SET user_mess == '{}' WHERE user_id == '{}'".format(mess, user_id))
+    cur.execute(f"SELECT user_role FROM profile WHERE user_id == '{user_id}'")
+    user_role = cur.fetchone()
     conn.commit()
+    return user_role[0]
 
 
-async def remind_mess(user_id: int) -> str:
+async def output_all_id():
     conn = sq.connect('database.db')
     cur = conn.cursor()
-    cur.execute(f"SELECT user_mess FROM profile WHERE user_id == '{user_id}'")
-    user_mess = cur.fetchone()
+    cur.execute(f'''SELECT user_id FROM profile''')
+    spam_base = cur.fetchall()
     conn.commit()
-    return user_mess[0]
+    return spam_base

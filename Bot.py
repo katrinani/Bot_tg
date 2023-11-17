@@ -1,23 +1,20 @@
 import sqlite3 as sq
 import aiogram
 import asyncio
-import pytz
-from aiogram import Router, F, Bot, types, Dispatcher
+from aiogram import F, Bot, types, Dispatcher
 from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
-from db_map import db_start, create_profile, edit_profile, check_group_of_student, add_remind, remind_mess
+from db_map import db_start, create_profile, edit_profile, check_group_of_student, check_role, output_all_id
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, StateFilter
 from aiogram.enums import ParseMode
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from datetime import datetime
+
 
 scheduler = AsyncIOScheduler()
 bot = Bot(token='6401248215:AAHb1ieiU5malll9Hga3-eqTsQgwLCZjXow')
 dp = Dispatcher(storage=MemoryStorage())
-router = Router()
 
 group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
 callback_map = ['0fl', '1fl', '2fl', '3fl', '4fl']
@@ -31,8 +28,7 @@ async def on_startup():
 
 class ProfileStatesGroup(StatesGroup):  # cоздаем класс  насследующийся от StatesGroup
     choosing_group = State()  # статус ожидания на group
-    make_remind = State()
-    choose_data = State()
+    input_text = State()
 
 
 def get_cancel_kb() -> ReplyKeyboardMarkup:
@@ -88,7 +84,7 @@ async def cmd_cancel(message: Message, state: FSMContext):
 )  # состояние ожидания группы и текст из списка
 async def load_group(message: Message, state: FSMContext) -> None:
     user_group = message.text
-    await message.reply(text=f"Ваша группа :{user_group}\nТеперь можно продолжить")
+    await message.reply(text=f"Ваша группа : {user_group}\nТеперь можно продолжить!")
     await edit_profile(user_group, user_id=message.from_user.id)
     await state.clear()
 
@@ -99,9 +95,6 @@ async def check_group(message: Message):
 
 
 # ----------------------------------------------------------------------
-async def reminder():
-    mess = await remind_mess(tg_user_id)
-    await message.answer('Привет! Тебе пришло напоминание: \n', mess)  # nекст из базы данных достать
 
 
 @dp.callback_query(F.data.in_(callback_map))
@@ -306,36 +299,27 @@ async def it(message: Message):
     )
 
 
-@dp.message(Command('reminder'))
-async def start_remind(message: Message, state: FSMContext):
-    await message.answer('Какое напоминание хотите создать? Введите текст с напоминанием')
-    await state.set_state(ProfileStatesGroup.make_remind)  # вешаем статус ожидания ввода напоминания
+@dp.message(F.text, Command('spam'))
+async def can_spam(message: Message, state: FSMContext):
+    user_role = await check_role(message.from_user.id)
+    if user_role == 'ADMIN':
+        await message.answer('Введите текст рассылки')
+        await state.set_state(ProfileStatesGroup.input_text)
+    else:
+        await message.answer('У вас нет прав администратора для этой функции')
 
 
-@dp.message(ProfileStatesGroup.make_remind)
-async def remind_to_bd(message: Message, state: FSMContext):
-    await add_remind(mess=message.text, user_id=tg_user_id)
-    await message.answer(
-        'Хорошо! Теперь введите дату и время, в формате: час минута день месяц год (прим: "18 50 30 11 2022")'
-    )
-    await state.set_state(ProfileStatesGroup.choose_data)
-
-
-@dp.message(ProfileStatesGroup.choose_data)
-async def remind(message: Message, state: FSMContext):
-    data_time = message.text
-    scheduler.add_job(
-        func=reminder,
-        trigger='date',
-        run_date=datetime(
-            hour=int(data_time[0:2]),
-            minute=int(data_time[3:5]),
-            day=int(data_time[6:8]),
-            month=int(data_time[9:11]),
-            year=int(data_time[12:]))
-    )
-    await message.answer('Напоминание создано успешно!')
-    await state.clear()
+@dp.message(F.text, ProfileStatesGroup.input_text)
+async def start_spam(message: Message, state: FSMContext):
+    if message.text == 'Назад':
+        await message.answer('Действие отменено')
+        await state.clear()
+    else:
+        spam_base = await output_all_id()
+        for num in range(len(spam_base)):
+            await bot.send_message(chat_id=spam_base[num][0], text=message.text)
+            await message.answer('Рассылка завершена!')
+            await state.clear()
 
 
 async def main():
