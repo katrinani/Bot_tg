@@ -2,9 +2,11 @@ import sqlite3 as sq
 import aiogram
 import asyncio
 import json
+
+from db_map import db_start, create_profile, edit_profile, check_group_of_student, check_role, output_all_id
+
 from aiogram import F, Bot, types, Dispatcher
 from aiogram.types import FSInputFile, ReplyKeyboardMarkup, KeyboardButton, Message
-from db_map import db_start, create_profile, edit_profile, check_group_of_student, check_role, output_all_id
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context import FSMContext
@@ -20,8 +22,10 @@ dp = Dispatcher(storage=MemoryStorage())
 
 group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
 callback_map = ['0fl', '1fl', '2fl', '3fl', '4fl']
-callback_timetable = ['1_1d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
+callback_mater = ['mat1', 'mat2', 'mat3', 'mat4', 'mat5', 'mat6', 'mat7', 'mat8', 'mat9','mat10',]
+callback_timetable = ['1_1d', '1_2d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
 callback_info = ['csu', 'it']
+callback_week = ['n1', 'n2']
 callback_questions = ['que1', 'que2', 'que3', 'que4', 'que5', 'que6', 'que7', 'que8']
 tg_user_id = ''
 
@@ -57,19 +61,17 @@ def get_kb() -> ReplyKeyboardMarkup:
 
 @dp.message(F.text, Command('start'))
 async def cmd_start(message: Message) -> None:
-    await message.answer('Добро пожаловать! Для начала давайте создадим профиль. Нажмите /create',
+    await message.answer('Добро пожаловать! Для начала давайте создадим профиль для таких функций \
+как расписание и рассылка. Нажмите /create',
                          reply_markup=get_kb())
-
-    global tg_user_id
-    tg_user_id = str(message.from_user.id)
     await create_profile(user_id=message.from_user.id)
 
 
 @dp.message(F.text, Command('create'))
 async def cmd_create(message: Message, state: FSMContext):
     await message.reply(
-        text="Для начала работы давате сначала уточним вашу группу и номер группы. Введите их в формате 'ПИ101'\
-    \nЕсли хотите прекратить создание профиля нажмите cancel",
+        text="Для начала работы давате сначала уточним вашу группу и \
+номер группы (Пример: 'ПИ101')\nЕсли хотите прекратить создание профиля нажмите cancel",
         reply_markup=get_cancel_kb())
     await state.set_state(ProfileStatesGroup.choosing_group)  # установили состояние ожидания группы
 
@@ -88,7 +90,8 @@ async def cmd_cancel(message: Message, state: FSMContext):
 )  # состояние ожидания группы и текст из списка
 async def load_group(message: Message, state: FSMContext) -> None:
     user_group = message.text
-    await message.reply(text=f"Ваша группа : {user_group}\nТеперь можно продолжить!")
+    await message.reply(text=f"Ваша группа : {user_group}\nТеперь можно продолжить!\
+\nНажмите /help для просмотра возможностей бота")
     await edit_profile(user_group, user_id=message.from_user.id)
     await state.clear()
 
@@ -150,19 +153,25 @@ async def map_csu(message: types.Message):
 
 @dp.message(F.text, Command('timetable'))
 async def timetable(message: Message):
-    markup = InlineKeyboardBuilder()
-    btn1 = types.InlineKeyboardButton(text='Нечетная неделя (1)', callback_data='n1')
-    btn2 = types.InlineKeyboardButton(text='Четная неделя (2)', callback_data='n2')
-    markup.row(btn1)
-    markup.row(btn2)
-    await message.answer(
-        text='Выберите <em> неделю </em>',
-        reply_markup=markup.as_markup(),
-        parse_mode=ParseMode.HTML
-    )
+    group = await check_group_of_student(message.from_user.id)
+    if group == '':
+        await message.answer('Для доступа к этой функции сначала пройдите регистрацию! Для этого пройдите /create')
+    else:
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(text='Нечетная неделя (1)', callback_data='n1')
+        btn2 = types.InlineKeyboardButton(text='Четная неделя (2)', callback_data='n2')
+        markup.row(btn1)
+        markup.row(btn2)
+        await message.answer(
+            text='Выберите <em> неделю </em>',
+            reply_markup=markup.as_markup(),
+            parse_mode=ParseMode.HTML
+        )
+        global tg_user_id
+        tg_user_id = str(message.from_user.id)
 
 
-@dp.callback_query(F.data == 'n1' or F.data == 'n2')
+@dp.callback_query(F.data.in_(callback_week))
 async def one_step(callback: types.CallbackQuery):
     if callback.data == 'n1':
         markup2 = InlineKeyboardBuilder()
@@ -201,8 +210,14 @@ async def one_step(callback: types.CallbackQuery):
 @dp.message(F.text, Command('info'))
 async def info(message: Message):
     markup = InlineKeyboardBuilder()
-    btn1 = types.InlineKeyboardButton(text='Информация о интернет-ресурсах ЧелГУ', callback_data='csu')
-    btn2 = types.InlineKeyboardButton(text='Ресурсы для программистов', callback_data='it')
+    btn1 = types.InlineKeyboardButton(
+        text='Информация о интернет-ресурсах ЧелГУ',
+        callback_data='csu'
+    )
+    btn2 = types.InlineKeyboardButton(
+        text='Ресурсы для программистов',
+        callback_data='it'
+    )
     markup.row(btn1)
     markup.row(btn2)
     await message.answer(
@@ -282,11 +297,14 @@ async def questions(message: Message):
     )
 
 
-@dp.message(F.data.in_(callback_questions))
+@dp.callback_query(F.data.in_(callback_questions))
 async def answer(callback: types.CallbackQuery):
     for num in range(1, 9):
         if callback.data == f'que{num}':
-            await callback.message.answer(text=mes_data[f'answ{num}'], parse_mode=ParseMode.HTML)
+            await callback.message.answer(
+                text=mes_data[f'answ{num}'],
+                parse_mode=ParseMode.HTML
+            )
 
 
 # функция, высылающая спам рассылки от админа
@@ -297,7 +315,7 @@ async def can_spam(message: Message, state: FSMContext):
         await message.answer('Введите текст рассылки')
         await state.set_state(ProfileStatesGroup.input_text)
     else:
-        await message.answer('У вас нет прав администратора для этой функции')
+        await message.answer('У вас нет прав администратора для этой функции или вы не прошли регистрацию')
 
 
 @dp.message(F.text, ProfileStatesGroup.input_text)
@@ -311,6 +329,39 @@ async def start_spam(message: Message, state: FSMContext):
             await bot.send_message(chat_id=spam_base[num][0], text=message.text)
             await message.answer('Рассылка завершена!')
             await state.clear()
+
+
+@dp.message(F.text, Command('materials'))
+async def start_materials(message: Message):
+    markup = InlineKeyboardBuilder()
+    for num in range(1, 11):
+        btn = types.InlineKeyboardButton(text=f'№{num}', callback_data=f'mat{num}')
+        markup.add(btn)
+    await message.answer(
+        text=mes_data['materials'],
+        parse_mode=ParseMode.HTML,
+        reply_markup=markup.as_markup()
+    )
+
+
+@dp.callback_query(F.data.in_(callback_mater))
+async def answer(callback: types.CallbackQuery):
+    if callback.data == 'mat1':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='Англо-русский словарь Мюллера',
+            url='https://gufo.me/dict/enru_muller')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Duolingo - Лучший в мире способ учить языки',
+            url='https://www.duolingo.com/')
+        markup.row(btn2)
+        btn3 = types.InlineKeyboardButton(
+            text='Free English Grammar Lessons and Tests',
+            url='https://www.grammar-monster.com/')
+        markup.row(btn3)
+        await callback.message.answer('Материалы для английского', reply_markup=markup.as_markup())
+
 
 
 async def main():
