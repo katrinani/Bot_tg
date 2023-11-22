@@ -22,12 +22,11 @@ dp = Dispatcher(storage=MemoryStorage())
 
 group_name = ['ПРИ101', 'ПРИ102', 'ПРИ103', 'БИ101', 'ПИ101']
 callback_map = ['0fl', '1fl', '2fl', '3fl', '4fl']
-callback_mater = ['mat1', 'mat2', 'mat3', 'mat4', 'mat5', 'mat6', 'mat7', 'mat8', 'mat9','mat10',]
+callback_mater = ['mat1', 'mat2', 'mat3', 'mat4', 'mat5', 'mat6', 'mat7', 'mat8', 'mat9', 'mat10',]
 callback_timetable = ['1_1d', '1_2d', '1_3d', '1_4d', '1_5d', '1_6d', '2_1d', '2_2d', '2_3d', '2_4d', '2_5d', '2_6d']
 callback_info = ['csu', 'it']
 callback_week = ['n1', 'n2']
 callback_questions = ['que1', 'que2', 'que3', 'que4', 'que5', 'que6', 'que7', 'que8']
-tg_user_id = ''
 
 
 async def on_startup():
@@ -346,6 +345,7 @@ async def start_materials(message: Message):
 
 @dp.callback_query(F.data.in_(callback_mater))
 async def answer(callback: types.CallbackQuery):
+
     if callback.data == 'mat1':
         markup = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(
@@ -360,8 +360,130 @@ async def answer(callback: types.CallbackQuery):
             text='Free English Grammar Lessons and Tests',
             url='https://www.grammar-monster.com/')
         markup.row(btn3)
-        await callback.message.answer('Материалы для английского', reply_markup=markup.as_markup())
+        await callback.message.answer(
+            text='Материалы для Aнглийского',
+            reply_markup=markup.as_markup()
+        )
 
+    elif callback.data == 'mat2':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='Основы дискретной математики',
+            url='https://habr.com/ru/companies/otus/articles/529600/')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Дискретная математика. Курс лекций',
+            url='https://siblec.ru/informatika-i-vychislitelnaya-tekhnika/diskretnaya-matematika?ysclid=lp87bv0d2p745216383')
+        markup.row(btn2)
+        await callback.message.answer(
+            text='Материалы для Дискретной математики',
+            reply_markup=markup.as_markup()
+        )
+
+    elif callback.data == 'mat3':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='Школа программиста',
+            url='https://acmp.ru/?ysclid=lp87fqd34f765284201')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Главная страница на ulearn.me',
+            url='https://ulearn.me/')
+        markup.row(btn2)
+        await callback.message.answer(
+            text='Материалы для Информатики и программирования',
+            reply_markup=markup.as_markup()
+        )
+
+    elif callback.data == 'mat4':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='Arzamas',
+            url='https://arzamas.academy/?ysclid=lp87k0ru38913824207')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Arzamas - YouTube',
+            url='https://www.youtube.com/channel/UCVgvnGSFU41kIhEc09aztEg')
+        markup.row(btn2)
+        await callback.message.answer(
+            text='Материалы для Истории России',
+            reply_markup=markup.as_markup()
+        )
+
+    elif callback.data == 'mat5':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='Линейная алгебра и аналитическая геометрия, YouTube',
+            url='https://www.youtube.com/playlist?list=PLaX3n04-uUZoTu4DcD2Eqgq-h5wimh_uT')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Аналитическая геометрия для «чайников» ',
+            url='https://mathter.pro/angem/index.html')
+        markup.row(btn2)
+        await callback.message.answer(
+            text='Материалы для Линейной алгебра и аналитической геометрия',
+            reply_markup=markup.as_markup()
+        )
+
+    elif callback.data == 'mat6':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='N Eliseeva - YouTube',
+            url='https://www.youtube.com/@NEliseeva/featured')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Высшая математика для заочников и не только',
+            url='http://www.mathprofi.ru/')
+        markup.row(btn2)
+        await callback.message.answer(
+            text='Материалы для Математического анализа',
+            reply_markup=markup.as_markup()
+        )
+
+    elif callback.data == 'mat7' or callback.data == 'mat8':
+        markup = InlineKeyboardBuilder()
+        markup.add(types.InlineKeyboardButton(
+            text='Ссылка на бота',
+            url='https://t.me/Trezz_bot'
+        ))
+        await callback.message.answer(
+            text='Бот наших коллег',
+            reply_markup=markup.as_markup()
+        )
+
+    elif callback.data == 'mat9':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='Примеры библиографических описаний пo',
+            url='https://library.csu.ru//media/files/i-culture/primery_new-gost-2018.pdf')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Библиографическое описание',
+            url='https://library.csu.ru//media/files/i-culture/gosty.pdf')
+        markup.row(btn2)
+        await callback.message.answer(
+            text='Материалы для Современным технологиям поиска и обработки информации',
+            reply_markup=markup.as_markup()
+        )
+
+    elif callback.data == 'mat10':
+        markup = InlineKeyboardBuilder()
+        btn1 = types.InlineKeyboardButton(
+            text='Википедия — свободная энциклопедия',
+            url='https://ru.wikipedia.org/wiki/Заглавная_страница')
+        markup.row(btn1)
+        btn2 = types.InlineKeyboardButton(
+            text='Конспект лекций по механике',
+            url='https://teachmen.csu.ru/methods/konspect_mech.pdf')
+        markup.row(btn2)
+        btn3 = types.InlineKeyboardButton(
+            text='Огурцов А.Н. Физика для студентов. Часть 1. Механика',
+            url='https://smindolin.ucoz.ru/Lectures/TTP_21_TTP_22/1103880_4A1DC_ogurcov_a_n_fizika_dlya_studentov_ch.pdf')
+        markup.row(btn3)
+        await callback.message.answer(
+            text='Материалы для Физике',
+            reply_markup=markup.as_markup()
+        )
 
 
 async def main():
