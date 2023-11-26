@@ -60,8 +60,8 @@ def get_kb() -> ReplyKeyboardMarkup:
 
 @dp.message(F.text, Command('start'))
 async def cmd_start(message: Message) -> None:
-    await message.answer('Добро пожаловать! Для начала давайте создадим профиль для таких функций \
-как расписание и рассылка. Нажмите /create',
+    await message.answer('Welcome! For the beginning let's create your profile for functions\
+like timetable and рассылка. Push /create',
                          reply_markup=get_kb())
     await create_profile(user_id=message.from_user.id)
 
