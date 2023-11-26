@@ -2,125 +2,124 @@ import json
 
 data_mess = {
     "help": """
-    <b><em>Вот, с чем я могу тебе помочь</em></b>:
-    <em>/create</em> - проведу регистрацию твоего профиля
-    <em>/map</em> - выведу карты всех этажей главного корпуса и помогу найти дорогу до 4 корпуса
-    <em>/timetable</em> - покажу актуальное рассписание на конкретный день
-    <em>/info</em> - дам описание полезной информации о учёбе
-    <em>/links_csu</em> - выведу ссылки, связанные с ЧелГУ и деятелностью его студентов
-    <em>/links_it</em> - выведу полезные ссылки, помогающие в освоении it профессии
-    <em>/questions</em> - отвечу на самые часто задаваемые вопросы
-    <em>/spam</em> - разошлю сообщения для каждого пользователя чата (только для админов)
-    <em>/materials</em> - дам полезные материалы, которые пригодятся в учебе
-    <em>/help</em> - расскажу ещё раз про свои функции
+    <b><em>Here’s what I can help you with</em></b>:
+    <em>/create</em> - register your profile
+    <em>/map</em> - display maps of all floors of the main building and help to find the road up to 4 buildings
+    <em>/timetable</em> - show actual timetable on a particular day 
+    <em>/info</em> - give a description of useful information for the study
+    <em>/links_csu</em> - display links related to CSU and students' activity
+    <em>/links_it</em> - display useful links that help in IT career development
+    <em>/questions</em> - unswer the most popular questions
+    <em>/spam</em> - send messages to each chat user (admins only)
+    <em>/materials</em> - give usefull materials which can help you during studing
+    <em>/help</em> - tell about my functions again 
         """,
     "csu": """
-    <b><em>Сайты, связанные с ЧелГУ</em></b>:
-        <u>Мудл ЧелГУ</u> - система управления электронными образовательными курсами (здесь ты можешь\
-    найти курсы от преподавателей с различных факультетов)
-        <u>Мудл ИИТ</u> - здесь ты можешь найти курсы от преподавателей из ИИТ
-        <u>Сайт ЧелГУ</u> - новостной сайт, где ты можешь найти информацию о ЧелГУ в целом\
-    (структура, расписание и многое другое)
-        <u>Научная Библиотека ЧелГУ</u> - огромный каталог электронных книг и прочих информационных ресурсов
-        <u>ЦТС(ЦентрТворчестваСтудентов)</u> - здесь можно узнать о творческой внеучебной жизни вуза\
-    (информация по мероприятиям, ссылки на кружки по пению, танцам и т.д.)
-        <u>Профсоюзный Комитет(вк)</u> - информация для участников профсоюза (о мероприятиях,\
-    льготах, как вступить и т.п.)
+    <b><em>Websites related to CSU</em></b>:
+        <u>Moodle CSU</u> - e-learning management system (here you can\
+    find courses from teachers from different faculties)
+        <u>Moodle IIT</u> - here you can find courses from teachers from IIT faculty
+        <u>CSU site</u> - news site where you can find information about the CSU in general\
+    (structure, schedule and more)
+        <u>Scientific library CSU</u> - huge catalogue of e-books and other information sources
+        <u>SCC (Student Creativity Center)</u> - here you can learn about the creative extracurricular life of the university
+    (information on events, links to singing club, dancing club, etc.)
+        <u>Trade union committee (vk)</u> - information for trade union participants (about events,
+    benefits, how to join, etc.)
         
-        <em>Хочешь ссылки? Жми /links_csu</em>
+        <em>You want the references? Press /links_csu</em>
         """,
     "it": """
-    <b><em>Общие ресурсы (независимо от языка программирования)</em></b>:
-        <u>Habr</u> - сайт, созданный для публикации новостей, аналитических статей, мыслей, \
-    связанных с информационными технологиями и интернетом.
-        <u>GitHub</u> - крупнейший веб-сервис для хостинга IT-проектов и их совместной разработки. \
-    На сайте представлен свободный исходный код, с которым вы можете ознакомиться.
-        <u>Metanit</u> - сайт посвящен различным языкам и технологиям программирования, компьютерам,\
-    мобильным платформам и ИТ-технологиям c различные руководства и учебные материалы, статьи и примеры
-        <u>Открытый лекторий Летних школ от Яндекса</u> - более 150 лекций в онлайн-формате, общение с топовыми\
-    экспертами из Яндекса, прокачка знаний по востребованным IT‑специальностям и решение сложных бизнес‑кейсов
-        <u>Киберфорум</u> - форум программистов и системных администраторов, помощь в решении задач по \
-    программированию, математике, физике и другим наукам, решение проблем с компьютером, операционными системами
-        <u>Библиотека программиста</u> - материалы, которые научат и помогут программировать. Книги и лекции,\
-    видеоуроки и советы, тесты знаний и обсуждение горячих тем
-        <u>Roadmap</u> - собрание дорожных карт, руководств и другого образовательного контента, которое\
-    поможет разработчикам выбрать правильный путь и направлять их обучение.
+    <b><em>Shared resources (regardless of programming language)</em></b>:
+        <u>Habr</u> - a site created for the publication of news, analytical articles, thoughts,\
+    related to information technology and the Internet.
+        <u>GitHub</u> - the largest web service for hosting IT projects and their joint development.\
+    The site provides free source code, which you can read.
+        <u>Metanit</u> - the site is devoted to various languages and programming technologies, computers,\
+    mobile platforms and IT technologies with various guides and training materials, articles and examples
+        <u>Summer Schools Open Lecture Hall from Yandex</u> - more than 150 lectures in online format, communication with top\
+    experts from Yandex, the transfer of knowledge on demanded IT specialties and the solution of complex business cases
+        <u>Cyberforum</u> - forum of programmers and system administrators, help in solving problems on \
+    programming, mathematics, physics and other sciences, solving problems with computer, operating systems
+        <u>Programmer library</u> - materials that will teach and help programming. Books and lectures,\
+    videos and tips, knowledge tests and discussion of hot topics
+        <u>Roadmap</u> - collection of road maps, guides and other educational content that \
+    will help developers to choose the right path and guide their training.
         
-        <em>Заинтересовало? Жми /links_it для получения ссылок</em>
+        <em>Are you interested in? Press /links_it to get links</em>
         """,
     "que": """
-    <b><em>На какой вопрос вы хотите получить ответ?</em></b>
-        №1. Насколько тяжело учиться?
-        №2. Где найти расписание?
-        №3. Что такое чётные и нечётные недели? 
-        №4. Как найти свою аудиторию? 
-        №5. Что такое аттестационная неделя?
-        №6. Как проходит сессия и что это такое?
-        №7. Как организовать своё время?
-        №8. Где кого искать? 
+    <b><em>What question do you want answered?</em></b>
+        №1. How difficult it is to study?
+        №2. Where can I find a timetable?
+        №3. What are even and odd weeks? 
+        №4. How to find your audience?
+        №5. What is the  assessment week?
+        №6. How is the session goes and what is it?
+        №7. How to organize your time?
+        №8. Where to look for somebody? 
         """,
     "answ1": """
-    <b><em>Вопрос 1</em></b>
-        Зависит от подготовки студента (насколько хорошо учился в школе, скорость восприятия информации), но если \
-    изучаемое дело нравится, то изучение даже самых сложных предметов будет доставлять радость
+    <b><em>Question 1</em></b>
+        Depends on the student’s training (how well he studied at school, the speed of perception of information), but if \
+    you really enjoy studied case, the study of even the most difficult subjects will bring joy
     """,
     "answ2": """
-    <b><em>Вопрос 2</em></b>
-        Официальный сайт ЧелГУ -> Студентам -> Расписания 
+    <b><em>Question  2</em></b>
+        Official website of TSU -> Students -> Timetables
     """,
     "answ3": """
-    <b><em>Вопрос 3</em></b>
-        Можно сказать, что расписание в вузе составлено с периодом 14 дней (а не 7, к которым мы привыкли в школе),\
-    т.е. через каждые 14 дней расписание повторяется. 
+    <b><em>Question  3</em></b>
+       It can be said that the schedule of the university is composed with a period of 14 days (not 7, to which we are accustomed in school),\
+    i.e. every 14 days the schedule is repeated.
     """,
     "answ4": """
-    <b><em>Вопрос 4</em></b>
-        Если название аудитории начинается с буквы А, например А17, искать её нужно в лекционном корпусе. \
-    Если нет, то в главном. В театральном корпусе пар, как правило, нет. Первая цифра в номере аудитории \
-    указывает на этаж, например А24 расположена на 2-ом этаже, 315 на третьем, а аудиторию \
-    002 нужно искать в подвале.
+    <b><em>Question  4</em></b>
+        If the name of the audience starts with the letter A, for example A17, you should look for it in the lecture building.\
+    If not, then in the main. In the theater building, usually no pairs. The first digit in the room\
+    points to the floor, for example A24 is located on the 2nd floor, 315 on the third, and the auditorium\
+    002 should be in the basement.
     """,
     "answ5": """
-    <b><em>Вопрос 5</em></b>
-        Аттестационная неделя - это та же неделя с таким же расписанием занятий. Просто в течение этой недели \
-    старосты подходят к преподавателям и просят проставить аттестацию. Аттестация - это некоторые \
-    предварительные итоги. Если студент аттестован по предмету, это говорит о том что он хорошо усваивает \
-    учебный материал и вероятность того, что он хорошо сдаст зачёт/экзамен по данному предмету, \
-    достаточно высока. Если студент не аттестован по предмету, это говорит о том, что он не успевает по данному \
-    предмету и ему нужно уделить больше внимания его освоению. За неаттестацию никто ругать не станет, \
-    она нужна, чтобы студент оценил свою промежуточную успеваемость.
+    <b><em>Question  5</em></b>
+    The  assessment week is the same week with the same schedule. Just this week\
+    prefects come to teachers and ask for a attestation . Attestation  - is some\
+    preliminary results. If the student is attestated in the subject, it indicates that he is well learnt\
+    training material and the likelihood that he will pass the test/examination on the subject well,\
+    high enough. If the student is not certified in the subject, it indicates that he does not spend enought time for this\
+    subject and he needs to pay more attention to its development. No one will scold for not reporting,\
+    it is nessesary to give the student a grade on his intermediate grades.
     """,
     "answ6": """
-    <b><em>Вопрос 6</em></b>
-        Сессия - это промежуток времени, выделенный для сдачи студентами экзаменов за текущий семестр. Во время \
-    сесси у студентов нет пар, кроме тех, на которых они сдают экзамены.
+    <b><em>Question  6</em></b>
+        Session - is the period of time allocated for students to pass the exams for the current semester. During\
+    the session, students do not have couples other than those in which they take exams.
     """,
     "answ7": """
-    <b><em>Вопрос 7</em></b>
-        Организация времени - ключевой навык для студента. Вам поможет составление расписания с учетом всех \
-    занятий, домашних заданий и важных событий. Также рекомендуется определить приоритетные задачи и \
-    выделять достаточно времени для отдыха и саморазвития. Используйте календари и приложения для планирования, \
-    чтобы быть более организованным.
+    <b><em>Question  7</em></b>
+        Time management is a key skill for a student. Scheduling taking into account all classes, homework and important\ 
+        events will help you. It is also recommended to set priorities and allocate sufficient time for recreation and\
+        self-development. Use calendars and scheduling applications to be more organized.
     """,
     "answ8": """
-    <b><em>Вопрос 8</em></b>
-    331 - Юрина НА (вопросы по учебной деятельности)
-    323 - методист (справка об обучении)
-    103 - профком (задать все интересующие вопросы по профсоюзному комитету, вступить в профком, оформить материальну \
-    помощь, оформить путёвку в санаторий - профилакторий)
+    <b><em>Question  8</em></b>
+    331 - Yurina NA (questions on training activities)
+    323 - Methodist (certificate of training)
+    103 - profcom (ask all the questions about the trade union committee, join the trade union, arrange the material\
+    assistance, arrange a ticket to the sanatorium - preventorium)
     """,
     "materials": """
-    <b><em>Выберите предметы, по которым вы хотите узнать материалы:</em></b>
-    1. Английский
-    2. Дискретная математика
-    3. Информатика и программирование
-    4. История России
-    5. Линейная алгебра и аналитическая геометрия
-    6. Математический анализ
-    7. Основы российской государственности
-    8. Право
-    9. Современные технологии поиска и обработки информации
-    10. Физика
+    <b><em>Select the items you want to learn about:</em></b>
+    1. English
+    2. Discrete mathematics
+    3. Computer science and programming
+    4. History of Russia
+    5. Linear algebra and analytic geometry
+    6. Mathematical analysis
+    7. Fundamentals of Russian statehood
+    8. Right
+    9. Modern information retrieval and processing technologies
+    10. Physics
     """
 }
 

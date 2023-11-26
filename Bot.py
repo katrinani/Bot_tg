@@ -60,8 +60,8 @@ def get_kb() -> ReplyKeyboardMarkup:
 
 @dp.message(F.text, Command('start'))
 async def cmd_start(message: Message) -> None:
-    await message.answer('Welcome! For the beginning let's create your profile for functions\
-like timetable and рассылка. Push /create',
+    await message.answer("Welcome! For the beginning let's create your profile for functions\
+like timetable and mailing list. Push /create",
                          reply_markup=get_kb())
     await create_profile(user_id=message.from_user.id)
 
@@ -69,8 +69,8 @@ like timetable and рассылка. Push /create',
 @dp.message(F.text, Command('create'))
 async def cmd_create(message: Message, state: FSMContext):
     await message.reply(
-        text="Для начала работы давате сначала уточним вашу группу и \
-номер группы (Пример: 'ПИ101')\nЕсли хотите прекратить создание профиля нажмите cancel",
+        text="To start work let's clarify your group and \
+group number (For example: 'ПИ101')\nIf you want to finish creating of profile push cancel",
         reply_markup=get_cancel_kb())
     await state.set_state(ProfileStatesGroup.choosing_group)  # установили состояние ожидания группы
 
@@ -80,7 +80,7 @@ async def cmd_cancel(message: Message, state: FSMContext):
     if state is None:
         return
     await state.clear()
-    await message.answer(text='Действие отменено', reply_markup=get_kb())
+    await message.answer(text='Action canceled', reply_markup=get_kb())
 
 
 @dp.message(
@@ -89,15 +89,15 @@ async def cmd_cancel(message: Message, state: FSMContext):
 )  # состояние ожидания группы и текст из списка
 async def load_group(message: Message, state: FSMContext) -> None:
     user_group = message.text
-    await message.reply(text=f"Ваша группа : {user_group}\nТеперь можно продолжить!\
-\nНажмите /help для просмотра возможностей бота")
+    await message.reply(text=f"Your group : {user_group}\nNow you can continue!\
+\nPush /help to view bot capabilities")
     await edit_profile(user_group, user_id=message.from_user.id)
     await state.clear()
 
 
 @dp.message(StateFilter('ProfileStatesGroup:choosing_group'))  # то же состояние, но на вход пришли другие данные
 async def check_group(message: Message):
-    await message.reply('Нет такой группы. Попробуйте ещё раз ввести группу и номер в верхнем регистре (пр. ПИ101)')
+    await message.reply("Such group doesn't exist. Try to enter group and number in uppercase again (example: 'ПИ101')")
 
 
 # ----------------------------------------------------------------------
@@ -107,7 +107,7 @@ async def check_group(message: Message):
 async def callback_message(callback: types.CallbackQuery):
     first_char = str(callback.data)[0]  # 1 число поступающего колбэка
     file = FSInputFile(f'floor/Этаж {first_char}.png')
-    await callback.message.answer(text=f'{first_char} этаж')  # вызов 0 этажа пока не возможен, jpg формат
+    await callback.message.answer(text=f'{first_char} flour')  # вызов 0 этажа пока не возможен, jpg формат
     await callback.message.answer_photo(file)
 
 
@@ -130,13 +130,13 @@ async def help_ph(message: types.Message):
 @dp.message(F.text, Command('map'))
 async def map_csu(message: types.Message):
     markup = InlineKeyboardBuilder()
-    btn1 = types.InlineKeyboardButton(text='0 этаж', callback_data='0fl')
-    btn2 = types.InlineKeyboardButton(text='1 этаж', callback_data='1fl')
-    btn3 = types.InlineKeyboardButton(text='2 этаж', callback_data='2fl')
-    btn4 = types.InlineKeyboardButton(text='3 этаж', callback_data='3fl')
-    btn5 = types.InlineKeyboardButton(text='4 этаж', callback_data='4fl')
+    btn1 = types.InlineKeyboardButton(text='0 flour', callback_data='0fl')
+    btn2 = types.InlineKeyboardButton(text='1 flour', callback_data='1fl')
+    btn3 = types.InlineKeyboardButton(text='2 flour', callback_data='2fl')
+    btn4 = types.InlineKeyboardButton(text='3 flour', callback_data='3fl')
+    btn5 = types.InlineKeyboardButton(text='4 flour', callback_data='4fl')
     btn6 = types.InlineKeyboardButton(
-        text='Расположение 4 корпуса',
+        text='location of building 4',
         url='https://maps.google.com/maps?q=55.180035,61.335219&ll=55.180035,61.335219&z=16'
         )
     markup.row(btn1)
@@ -144,7 +144,7 @@ async def map_csu(message: types.Message):
     markup.row(btn4, btn5)
     markup.row(btn6)
     await message.answer(
-        text='Какой <em>этаж/корпус</em> Вас интересует?',
+        text='Which <em>flour/</em>building are you interested in?',
         reply_markup=markup.as_markup(),
         parse_mode=ParseMode.HTML
     )
@@ -154,15 +154,15 @@ async def map_csu(message: types.Message):
 async def timetable(message: Message):
     group = await check_group_of_student(message.from_user.id)
     if group == '':
-        await message.answer('Для доступа к этой функции сначала пройдите регистрацию! Для этого пройдите /create')
+        await message.answer('To access this feature, first go through the regime! For this go through /create')
     else:
         markup = InlineKeyboardBuilder()
-        btn1 = types.InlineKeyboardButton(text='Нечетная неделя (1)', callback_data='n1')
-        btn2 = types.InlineKeyboardButton(text='Четная неделя (2)', callback_data='n2')
+        btn1 = types.InlineKeyboardButton(text='Odd week (1)', callback_data='n1')
+        btn2 = types.InlineKeyboardButton(text='Even week (2)', callback_data='n2')
         markup.row(btn1)
         markup.row(btn2)
         await message.answer(
-            text='Выберите <em> неделю </em>',
+            text='Choose <em> a week </em>',
             reply_markup=markup.as_markup(),
             parse_mode=ParseMode.HTML
         )
@@ -174,33 +174,33 @@ async def timetable(message: Message):
 async def one_step(callback: types.CallbackQuery):
     if callback.data == 'n1':
         markup2 = InlineKeyboardBuilder()
-        btn1 = types.InlineKeyboardButton(text='Понедельник', callback_data='1_1d')
-        btn2 = types.InlineKeyboardButton(text='Вторник', callback_data='1_2d')
-        btn3 = types.InlineKeyboardButton(text='Среда', callback_data='1_3d')
-        btn4 = types.InlineKeyboardButton(text='Четверг', callback_data='1_4d')
-        btn5 = types.InlineKeyboardButton(text='Пятница', callback_data='1_5d')
-        btn6 = types.InlineKeyboardButton(text='Суббота', callback_data='1_6d')
+        btn1 = types.InlineKeyboardButton(text='Mondey', callback_data='1_1d')
+        btn2 = types.InlineKeyboardButton(text='Tuesday', callback_data='1_2d')
+        btn3 = types.InlineKeyboardButton(text='Wednesday', callback_data='1_3d')
+        btn4 = types.InlineKeyboardButton(text='Thursday', callback_data='1_4d')
+        btn5 = types.InlineKeyboardButton(text='Friday', callback_data='1_5d')
+        btn6 = types.InlineKeyboardButton(text='Saturday', callback_data='1_6d')
         markup2.row(btn1, btn2)
         markup2.row(btn3, btn4)
         markup2.row(btn5, btn6)
         await callback.message.answer(
-            text='Выберите <em>день недели</em>',
+            text='Choose <em>day of the week</em>',
             reply_markup=markup2.as_markup(),
             parse_mode='HTML'
         )
     elif callback.data == 'n2':
         markup3 = InlineKeyboardBuilder()
-        btn1 = types.InlineKeyboardButton(text='Понедельник', callback_data='2_1d')
-        btn2 = types.InlineKeyboardButton(text='Вторник', callback_data='2_2d')
-        btn3 = types.InlineKeyboardButton(text='Среда', callback_data='2_3d')
-        btn4 = types.InlineKeyboardButton(text='Четверг', callback_data='2_4d')
-        btn5 = types.InlineKeyboardButton(text='Пятница', callback_data='2_5d')
-        btn6 = types.InlineKeyboardButton(text='Суббота', callback_data='2_6d')
+        btn1 = types.InlineKeyboardButton(text='Monday', callback_data='2_1d')
+        btn2 = types.InlineKeyboardButton(text='Tuesday', callback_data='2_2d')
+        btn3 = types.InlineKeyboardButton(text='Wednesday', callback_data='2_3d')
+        btn4 = types.InlineKeyboardButton(text='Thursday', callback_data='2_4d')
+        btn5 = types.InlineKeyboardButton(text='Friday', callback_data='2_5d')
+        btn6 = types.InlineKeyboardButton(text='Saturday', callback_data='2_6d')
         markup3.row(btn1, btn2)
         markup3.row(btn3, btn4)
         markup3.row(btn5, btn6)
         await callback.message.answer(
-            text='Выберите <em>день недели</em>',
+            text='Choose <em>the day of the week</em>',
             reply_markup=markup3.as_markup(),
             parse_mode='HTML'
         )
@@ -210,17 +210,17 @@ async def one_step(callback: types.CallbackQuery):
 async def info(message: Message):
     markup = InlineKeyboardBuilder()
     btn1 = types.InlineKeyboardButton(
-        text='Информация о интернет-ресурсах ЧелГУ',
+        text='Information about internet-sources CSU',
         callback_data='csu'
     )
     btn2 = types.InlineKeyboardButton(
-        text='Ресурсы для программистов',
+        text='Sources for programmers',
         callback_data='it'
     )
     markup.row(btn1)
     markup.row(btn2)
     await message.answer(
-        text='Какая <em>информация</em> Вас интересует?',
+        text='Which <em>information</em> are you interested in?',
         reply_markup=markup.as_markup(),
         parse_mode=ParseMode.HTML
     )
@@ -243,18 +243,18 @@ async def callback_mes(callback: types.CallbackQuery):
 @dp.message(F.text, Command('links_csu'))
 async def csu(message: Message):
     markup = InlineKeyboardBuilder()
-    btn1 = types.InlineKeyboardButton(text='Мудл ЧелГУ', url='https://moodle.uio.csu.ru/')
-    btn2 = types.InlineKeyboardButton(text='Мудл ИИТ', url='https://eu.iit.csu.ru')
-    btn3 = types.InlineKeyboardButton(text='Сайт ЧелГУ', url='https://www.csu.ru/')
-    btn4 = types.InlineKeyboardButton(text='Научная Библиотека ЧелГУ', url='https://library.csu.ru/ru/')
-    btn5 = types.InlineKeyboardButton(text='ЦТС (Центр Творчества Студентов)', url='https://ctsofficial.ru/')
-    btn6 = types.InlineKeyboardButton(text='Профсоюзный Комитет (вк)', url='https://vk.com/profcomcsu')
+    btn1 = types.InlineKeyboardButton(text='Moodle CSU', url='https://moodle.uio.csu.ru/')
+    btn2 = types.InlineKeyboardButton(text='Moodle IIT', url='https://eu.iit.csu.ru')
+    btn3 = types.InlineKeyboardButton(text='CSU site', url='https://www.csu.ru/')
+    btn4 = types.InlineKeyboardButton(text='Scientific library CSU', url='https://library.csu.ru/ru/')
+    btn5 = types.InlineKeyboardButton(text='SCC (Student Creativity Center)', url='https://ctsofficial.ru/')
+    btn6 = types.InlineKeyboardButton(text='Trade union committee (vk)', url='https://vk.com/profcomcsu')
     markup.row(btn1, btn2, btn3)
     markup.row(btn4)
     markup.row(btn5)
     markup.row(btn6)
     await message.answer(
-        text='Выберите <em>рессурс</em>, на который хотите перейти',
+        text='Choose <em>source</em>, to which you want to switch',
         reply_markup=markup.as_markup(),
         parse_mode=ParseMode.HTML
     )
@@ -266,17 +266,17 @@ async def it(message: Message):
     btn1 = types.InlineKeyboardButton(text='Habr', url='https://habr.com/ru/')
     btn2 = types.InlineKeyboardButton(text='GitHub', url='https://github.com/')
     btn3 = types.InlineKeyboardButton(text='Metanit', url='https://metanit.com/')
-    btn4 = types.InlineKeyboardButton(text='Открытый лекторий Летних школ от Яндекса',
+    btn4 = types.InlineKeyboardButton(text='Summer Schools Open Lecture Hall from Yandex',
                                       url='https://yandex.ru/yaintern/schools/open-lectures')
-    btn5 = types.InlineKeyboardButton(text='Киберфорум', url='https://www.cyberforum.ru/')
-    btn6 = types.InlineKeyboardButton(text='Библиотека программиста', url='https://proglib.io/')
+    btn5 = types.InlineKeyboardButton(text='Cyberforum', url='https://www.cyberforum.ru/')
+    btn6 = types.InlineKeyboardButton(text='Programmer library, url='https://proglib.io/')
     btn7 = types.InlineKeyboardButton(text='Roadmap', url='https://roadmap.sh/')
     markup.row(btn1, btn2, btn3)
     markup.row(btn4)
     markup.row(btn5, btn7)
     markup.row(btn6)
     await message.answer(
-        text='Выберите <em>рессурс</em>, на который хотите перейти',
+        text='Choose <em>source</em>, to which you want to switch',
         reply_markup=markup.as_markup(),
         parse_mode=ParseMode.HTML
     )
@@ -311,22 +311,22 @@ async def answer(callback: types.CallbackQuery):
 async def can_spam(message: Message, state: FSMContext):
     user_role = await check_role(message.from_user.id)
     if user_role == 'ADMIN':
-        await message.answer('Введите текст рассылки')
+        await message.answer('Enter text for mailing')
         await state.set_state(ProfileStatesGroup.input_text)
     else:
-        await message.answer('У вас нет прав администратора для этой функции или вы не прошли регистрацию')
+        await message.answer('You do not have administrator rights for this feature or you are not registered')
 
 
 @dp.message(F.text, ProfileStatesGroup.input_text)
 async def start_spam(message: Message, state: FSMContext):
-    if message.text == 'Назад':
-        await message.answer('Действие отменено')
+    if message.text == 'назад':
+        await message.answer('Action canceled')
         await state.clear()
     else:
         spam_base = await output_all_id()
         for num in range(len(spam_base)):
             await bot.send_message(chat_id=spam_base[num][0], text=message.text)
-            await message.answer('Рассылка завершена!')
+            await message.answer('Emailing is finished!')
             await state.clear()
 
 
@@ -349,11 +349,11 @@ async def answer(callback: types.CallbackQuery):
     if callback.data == 'mat1':
         markup = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(
-            text='Англо-русский словарь Мюллера',
+            text='Muller’s English-Russian Dictionary',
             url='https://gufo.me/dict/enru_muller')
         markup.row(btn1)
         btn2 = types.InlineKeyboardButton(
-            text='Duolingo - Лучший в мире способ учить языки',
+            text='Duolingo - The world’s best way to learn languages',
             url='https://www.duolingo.com/')
         markup.row(btn2)
         btn3 = types.InlineKeyboardButton(
@@ -361,37 +361,37 @@ async def answer(callback: types.CallbackQuery):
             url='https://www.grammar-monster.com/')
         markup.row(btn3)
         await callback.message.answer(
-            text='Материалы для Aнглийского',
+            text='Materials for English',
             reply_markup=markup.as_markup()
         )
 
     elif callback.data == 'mat2':
         markup = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(
-            text='Основы дискретной математики',
+            text='Fundamentals of discrete mathematics',
             url='https://habr.com/ru/companies/otus/articles/529600/')
         markup.row(btn1)
         btn2 = types.InlineKeyboardButton(
-            text='Дискретная математика. Курс лекций',
+            text='Discrete mathematics. Course of lectures',
             url='https://siblec.ru/informatika-i-vychislitelnaya-tekhnika/diskretnaya-matematika?ysclid=lp87bv0d2p745216383')
         markup.row(btn2)
         await callback.message.answer(
-            text='Материалы для Дискретной математики',
+            text='Materials for Discrete Mathematics',
             reply_markup=markup.as_markup()
         )
 
     elif callback.data == 'mat3':
         markup = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(
-            text='Школа программиста',
+            text='Programmer school',
             url='https://acmp.ru/?ysclid=lp87fqd34f765284201')
         markup.row(btn1)
         btn2 = types.InlineKeyboardButton(
-            text='Главная страница на ulearn.me',
+            text='Main page in ulearn.me',
             url='https://ulearn.me/')
         markup.row(btn2)
         await callback.message.answer(
-            text='Материалы для Информатики и программирования',
+            text='Materials for Computer Science and Programming',
             reply_markup=markup.as_markup()
         )
 
@@ -406,22 +406,22 @@ async def answer(callback: types.CallbackQuery):
             url='https://www.youtube.com/channel/UCVgvnGSFU41kIhEc09aztEg')
         markup.row(btn2)
         await callback.message.answer(
-            text='Материалы для Истории России',
+            text='МатериалыMaterials for Russian History',
             reply_markup=markup.as_markup()
         )
 
     elif callback.data == 'mat5':
         markup = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(
-            text='Линейная алгебра и аналитическая геометрия, YouTube',
+            text='Linear algebra and analytic geometry, YouTube',
             url='https://www.youtube.com/playlist?list=PLaX3n04-uUZoTu4DcD2Eqgq-h5wimh_uT')
         markup.row(btn1)
         btn2 = types.InlineKeyboardButton(
-            text='Аналитическая геометрия для «чайников» ',
+            text='Analytical geometry for «teapots»',
             url='https://mathter.pro/angem/index.html')
         markup.row(btn2)
         await callback.message.answer(
-            text='Материалы для Линейной алгебра и аналитической геометрия',
+            text='Materials for Linear algebra and analytic geometry',
             reply_markup=markup.as_markup()
         )
 
@@ -432,56 +432,56 @@ async def answer(callback: types.CallbackQuery):
             url='https://www.youtube.com/@NEliseeva/featured')
         markup.row(btn1)
         btn2 = types.InlineKeyboardButton(
-            text='Высшая математика для заочников и не только',
+            text='Advanced mathematics for part-time students and not only',
             url='http://www.mathprofi.ru/')
         markup.row(btn2)
         await callback.message.answer(
-            text='Материалы для Математического анализа',
+            text='Materials for Mathematical Analysis',
             reply_markup=markup.as_markup()
         )
 
     elif callback.data == 'mat7' or callback.data == 'mat8':
         markup = InlineKeyboardBuilder()
         markup.add(types.InlineKeyboardButton(
-            text='Ссылка на бота',
+            text='Link to bot',
             url='https://t.me/Trezz_bot'
         ))
         await callback.message.answer(
-            text='Бот наших коллег',
+            text='Bot of our colleagues',
             reply_markup=markup.as_markup()
         )
 
     elif callback.data == 'mat9':
         markup = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(
-            text='Примеры библиографических описаний пo',
+            text='Examples of bibliographic descriptions',
             url='https://library.csu.ru//media/files/i-culture/primery_new-gost-2018.pdf')
         markup.row(btn1)
         btn2 = types.InlineKeyboardButton(
-            text='Библиографическое описание',
+            text='bibliographic description',
             url='https://library.csu.ru//media/files/i-culture/gosty.pdf')
         markup.row(btn2)
         await callback.message.answer(
-            text='Материалы для Современным технологиям поиска и обработки информации',
+            text='Materials for Modern Information Retrieval and Processing Technologies',
             reply_markup=markup.as_markup()
         )
 
     elif callback.data == 'mat10':
         markup = InlineKeyboardBuilder()
         btn1 = types.InlineKeyboardButton(
-            text='Википедия — свободная энциклопедия',
+            text='Wikipedia - a free encyclopedia',
             url='https://ru.wikipedia.org/wiki/Заглавная_страница')
         markup.row(btn1)
         btn2 = types.InlineKeyboardButton(
-            text='Конспект лекций по механике',
+            text='Summary of lectures on mechanics',
             url='https://teachmen.csu.ru/methods/konspect_mech.pdf')
         markup.row(btn2)
         btn3 = types.InlineKeyboardButton(
-            text='Огурцов А.Н. Физика для студентов. Часть 1. Механика',
+            text='Ogurtsov A.N. Physics for students. Part 1. Mechanics',
             url='https://smindolin.ucoz.ru/Lectures/TTP_21_TTP_22/1103880_4A1DC_ogurcov_a_n_fizika_dlya_studentov_ch.pdf')
         markup.row(btn3)
         await callback.message.answer(
-            text='Материалы для Физике',
+            text='Materials for physics',
             reply_markup=markup.as_markup()
         )
 
